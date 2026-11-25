@@ -1,0 +1,72 @@
+// oulipo.party — deploy configuration for both environments.
+//
+// Production is the top level. Staging repeats everything, because a wrangler
+// environment replaces bindings and variables wholesale instead of adding to
+// them. Secrets live on each Worker, not here: BETTER_AUTH_SECRET and the
+// OAuth client secrets (GOOGLE_CLIENT_SECRET, GITHUB_CLIENT_SECRET,
+// DISCORD_CLIENT_SECRET), set with `wrangler secret put NAME [--env staging]`.
+{
+	"$schema": "node_modules/wrangler/config-schema.json",
+	"name": "oulipo-party",
+	"main": ".svelte-kit/cloudflare/_worker.js",
+	"compatibility_date": "2025-09-13",
+	"compatibility_flags": ["nodejs_als", "nodejs_compat"],
+	"assets": {
+		"binding": "ASSETS",
+		"directory": ".svelte-kit/cloudflare"
+	},
+	"observability": {
+		"enabled": true
+	},
+	"routes": [{ "pattern": "oulipo.party", "custom_domain": true }],
+	"d1_databases": [
+		{
+			"binding": "DB",
+			"database_name": "oulipo-party",
+			"database_id": "9d674250-f49f-4ab8-9d86-084cfd94907d"
+		}
+	],
+	"ai": {
+		"binding": "AI"
+	},
+	// Transactional mail (sign-up verification, password reset) goes through
+	// Cloudflare's Email Sending from this domain. No key: the binding is it.
+	"send_email": [{ "name": "EMAIL" }],
+	"vars": {
+		"BETTER_AUTH_URL": "https://oulipo.party",
+		"EMAIL_FROM": "oulipo.party <noreply@oulipo.party>",
+		// The same OAuth applications patrouch.ca uses, with this site's
+		// redirect addresses added to them. A provider is only offered when
+		// its id and its secret are both present.
+		"GOOGLE_CLIENT_ID": "935787532460-ontb8nl83kv1uce52tige0ceidnm62d.apps.googleusercontent.com",
+		"GITHUB_CLIENT_ID": "Ov23liiPv6DX5DfTr9tN",
+		"DISCORD_CLIENT_ID": ""
+	},
+	"env": {
+		"staging": {
+			// The workers.dev address serves the pages, but the sign-in library
+			// only answers on the origin it is configured for, so signing in
+			// works on staging.oulipo.party alone.
+			"workers_dev": true,
+			"routes": [{ "pattern": "staging.oulipo.party", "custom_domain": true }],
+			"d1_databases": [
+				{
+					"binding": "DB",
+					"database_name": "oulipo-party-staging",
+					"database_id": "2e0b993c-88ef-437c-86b1-fed92c556c41"
+				}
+			],
+			"ai": {
+				"binding": "AI"
+			},
+			"send_email": [{ "name": "EMAIL" }],
+			"vars": {
+				"BETTER_AUTH_URL": "https://staging.oulipo.party",
+				"EMAIL_FROM": "oulipo.party (staging) <staging@oulipo.party>",
+				"GOOGLE_CLIENT_ID": "935787532460-ontb8nl83kv1uce52tige0ceidnm62d.apps.googleusercontent.com",
+				"GITHUB_CLIENT_ID": "Ov23liiPv6DX5DfTr9tN",
+				"DISCORD_CLIENT_ID": ""
+			}
+		}
+	}
+}

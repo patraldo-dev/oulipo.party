@@ -1,0 +1,36 @@
+{
+  "name": "oulipo-party",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "oulipo.party — the solitaire duel: send your words against Sappho's hidden piece",
+  "packageManager": "pnpm@12.14.0",
+  "engines": {
+    "node": ">=22"
+  },
+  "imports": {
+    "#lib/*": "./src/lib/*"
+  },
+  "scripts": {
+    "dev": "vite dev",
+    "build": "vite build",
+    "preview": "vite preview",
+    "prepare": "svelte-kit sync || echo ''",
+    "check": "svelte-kit sync && svelte-check --tsconfig ./jsconfig.json",
+    "test": "node --disable-warning=ExperimentalWarning --test \"tests/*.test.js\""
+  },
+  "devDependencies": {
+    "@sveltejs/adapter-cloudflare": "8.0.2",
+    "@sveltejs/kit": "3.1.1",
+    "@sveltejs/vite-plugin-svelte": "7.3.1",
+    "svelte": "5.57.2",
+    "svelte-check": "4.7.7",
+    "typescript": "6.0.3",
+    "vite": "8.3.4",
+    "wrangler": "4.160.1"
+  },
+  "dependencies": {
+    "better-auth": "1.6.34",
+    "drizzle-orm": "0.45.4"
+  }
+}

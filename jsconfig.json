@@ -1,0 +1,16 @@
+{
+  "extends": "$app/tsconfig",
+  "compilerOptions": {
+    "checkJs": true,
+    "strict": true,
+    "sourceMap": true
+  },
+  "include": [
+    "worker-configuration.d.ts",
+    "src/**/*.js",
+    "src/**/*.ts",
+    "src/**/*.svelte",
+    ".svelte-kit/types/**/$types.d.ts"
+  ],
+  "exclude": ["node_modules/**"]
+}
