@@ -5,7 +5,9 @@
 
     // Set as the page starts, not in an effect: an effect runs only in the
     // browser, and the server would write every page in the store's default
-    // language before the browser could correct it.
+    // language before the browser could correct it. The first value is
+    // the one that is wanted here; the effect that follows tracks the rest.
+    // svelte-ignore state_referenced_locally
     setLocale(data.locale);
     $effect(() => {
         setLocale(data.locale);
