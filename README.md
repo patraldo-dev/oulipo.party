@@ -54,9 +54,12 @@ Two Workers in one configuration: production on `oulipo.party`, staging on
 wrangler d1 execute oulipo-party-staging --remote --file migrations/0001_auth.sql
 wrangler d1 execute oulipo-party          --remote --file migrations/0001_auth.sql
 
-# secrets, once per Worker
+# the session secret, once per Worker
 wrangler secret put BETTER_AUTH_SECRET --env staging
 wrangler secret put BETTER_AUTH_SECRET
+
+# the social providers' ids and secrets: one guided command
+bash scripts/signin-setup.sh
 
 # the site
 wrangler deploy --env staging
@@ -76,6 +79,10 @@ repository is connected to Workers Builds.
 | `DISCORD_CLIENT_SECRET` | With `DISCORD_CLIENT_ID`, offers Discord sign-in. |
 
 A social provider is offered only when its id and its secret are both set.
+`scripts/signin-setup.sh` writes the ids into `wrangler.jsonc` and puts the
+secrets on both Workers; it takes each value from an environment variable of
+its name or asks for it, and skips any you leave out (`--dry-run` shows the
+plan).
 
 Each provider's application must list this site's return addresses:
 
