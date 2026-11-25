@@ -1,40 +1,57 @@
-/* The palette the duel page was written against: sage and paper in the light,
-   pine and mist in the dark. */
+/* oulipo.party — flat and bold: white paper, black ink, heavy type, and one
+   bright colour for each part of the game (see components/GameIcon.svelte).
+   A dark theme keeps the same colours on charcoal. */
+
 :root {
-  --bg: #e7ede8;
-  --surface: #f0f5f1;
-  --surface-raised: #f7faf7;
-  --text: #1d2b24;
-  --text-muted: #63756b;
-  --text-dim: #45544c;
-  --accent: #5a6e65;
-  --accent-hover: #48584f;
-  --accent-bg: rgba(90, 110, 101, 0.12);
-  --signature: #9e4757;
-  --border: rgba(38, 54, 46, 0.15);
-  --glass-bg: rgba(255, 255, 255, 0.42);
-  --accent-border: rgba(90, 110, 101, 0.35);
-  --radius: 8px;
-  --radius-lg: 16px;
-  --font-body: 'Inter', system-ui, -apple-system, sans-serif;
-  --font-display: 'Outfit', var(--font-body);
-  --font-heading: 'Playfair Display', Georgia, serif;
+  --bg: #ffffff;
+  --surface: #ffffff;
+  --surface-raised: #f5f5f2;
+  --text: #121212;
+  --text-dim: #545454;
+  --text-muted: #767676;
+  --border: #dcdcdc;
+  --accent: #2b59ff;
+  --accent-hover: #1d46e0;
+  --accent-bg: #eaefff;
+  --accent-border: rgba(43, 89, 255, 0.4);
+  --signature: #121212;
+  --radius: 10px;
+  --radius-lg: 20px;
+  --font-body: 'Libre Franklin', 'Helvetica Neue', Arial, sans-serif;
+  --font-display: 'Libre Franklin', 'Helvetica Neue', Arial, sans-serif;
+  --font-heading: 'Libre Franklin', 'Helvetica Neue', Arial, sans-serif;
+  --font-reading: Georgia, 'Iowan Old Style', 'Times New Roman', serif;
+
+  /* The game's colours, the same in both themes. */
+  --duel: #2b59ff;
+  --hit: #2e8b57;
+  --miss: #d13d3d;
+  --spark: #f7c948;
+  --pen: #178a8a;
+  --cord: #e06a12;
+  --star: #7c5cd6;
+  --sappho: #d13f88;
+
+  /* A pair that always contrasts: black on white, or white on black. */
+  --contrast-bg: #121212;
+  --contrast-text: #ffffff;
 }
 
 html[data-theme='dark'] {
-  --bg: #101915;
-  --surface: #1a2420;
-  --surface-raised: #253129;
-  --text: #f0f0f5;
-  --text-muted: #8e8e9a;
-  --text-dim: #b8b8c5;
-  --accent: #a8bdb3;
-  --accent-hover: #c0d2c8;
-  --accent-bg: rgba(168, 189, 179, 0.1);
-  --signature: #e08a9a;
-  --border: #3a473f;
-  --glass-bg: rgba(255, 255, 255, 0.06);
-  --accent-border: rgba(168, 189, 179, 0.35);
+  --bg: #161616;
+  --surface: #1f1f1f;
+  --surface-raised: #2a2a2a;
+  --text: #f3f3f3;
+  --text-dim: #c9c9c9;
+  --text-muted: #9d9d9d;
+  --border: #3d3d3d;
+  --accent: #8aa4ff;
+  --accent-hover: #a9bbff;
+  --accent-bg: rgba(138, 164, 255, 0.14);
+  --accent-border: rgba(138, 164, 255, 0.45);
+  --signature: #f3f3f3;
+  --contrast-bg: #f3f3f3;
+  --contrast-text: #121212;
 }
 
 * {
@@ -45,7 +62,6 @@ html {
   font-size: 16px;
   overflow-x: hidden;
   background-color: var(--bg);
-  scroll-behavior: smooth;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
@@ -55,7 +71,7 @@ body {
   font-family: var(--font-body);
   background-color: var(--bg);
   color: var(--text);
-  line-height: 1.7;
+  line-height: 1.55;
   overflow-x: hidden;
 }
 
@@ -63,237 +79,268 @@ h1,
 h2,
 h3 {
   font-family: var(--font-heading);
-  font-weight: 600;
-  line-height: 1.2;
+  font-weight: 800;
+  line-height: 1.15;
+  letter-spacing: -0.015em;
 }
 
 a {
   color: var(--accent);
 }
 
+/* The strip along the top: every colour of the game, side by side. */
+.stripe {
+  height: 7px;
+  background: linear-gradient(
+    90deg,
+    var(--duel) 0 20%,
+    var(--spark) 20% 40%,
+    var(--hit) 40% 60%,
+    var(--cord) 60% 80%,
+    var(--sappho) 80% 100%
+  );
+}
+
+/* ── Cards ───────────────────────────────────────────────────────────── */
+
+.glass-surface {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow:
+    0 1px 2px rgba(18, 18, 18, 0.04),
+    0 10px 28px -20px rgba(18, 18, 18, 0.35);
+}
+
 /* ── Buttons ─────────────────────────────────────────────────────────── */
 
 .btn-primary {
-  display: inline-block;
-  background: var(--accent);
-  color: var(--bg);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  background: var(--contrast-bg);
+  color: var(--contrast-text);
   border: none;
   border-radius: var(--radius);
-  padding: 0.75rem 1.5rem;
+  padding: 0.8rem 1.5rem;
   font-family: var(--font-body);
-  font-weight: 600;
-  font-size: 0.95rem;
+  font-weight: 700;
+  font-size: 1rem;
+  line-height: 1.2;
   cursor: pointer;
   text-decoration: none;
-  transition: background 0.2s, transform 0.2s;
+  transition: transform 0.12s, opacity 0.12s;
 }
 
 .btn-primary:hover {
-  background: var(--accent-hover);
   transform: translateY(-1px);
 }
 
 .btn-secondary {
-  display: inline-block;
-  background: transparent;
-  color: var(--text-dim);
-  border: 1px solid var(--border);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  background: var(--surface);
+  color: var(--text);
+  border: 1.5px solid var(--text);
   border-radius: var(--radius);
   padding: 0.75rem 1.5rem;
   font-family: var(--font-body);
-  font-weight: 500;
-  font-size: 0.95rem;
+  font-weight: 700;
+  font-size: 1rem;
+  line-height: 1.2;
   cursor: pointer;
   text-decoration: none;
-  transition: all 0.2s;
+  transition: transform 0.12s, background 0.12s;
 }
 
 .btn-secondary:hover {
-  border-color: var(--accent);
-  color: var(--accent);
+  background: var(--surface-raised);
+  transform: translateY(-1px);
 }
 
-/* ── Surfaces ────────────────────────────────────────────────────────── */
-
-.glass-surface {
-  background: var(--glass-bg);
-  border: 1px solid var(--accent-border);
-  border-radius: var(--radius-lg);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
+.btn-primary.big,
+.btn-secondary.big {
+  font-size: 1.05rem;
+  padding: 0.95rem 1.8rem;
 }
 
-.ambient-glow {
-  position: relative;
+.btn-primary:focus-visible,
+.btn-secondary:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 2px;
 }
 
-.ambient-glow::before {
+/* ── The member pages: sign in, sign up, reset, account ─────────────── */
+
+.auth-card {
+  max-width: 26rem;
+  margin: 3rem auto 4rem;
+  padding: 2.25rem;
+  display: grid;
+  gap: 1rem;
+}
+
+.auth-card h1 {
+  margin: 0;
+  font-size: 1.9rem;
+  letter-spacing: -0.03em;
+}
+
+.auth-card p {
+  margin: 0;
+}
+
+.btn-block {
+  display: flex;
+  width: 100%;
+  text-align: center;
+}
+
+.auth-divider {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.auth-divider::before,
+.auth-divider::after {
   content: '';
-  position: absolute;
-  inset: -15% 0;
-  pointer-events: none;
-  background:
-    radial-gradient(640px 420px at 18% 42%, rgba(90, 110, 101, 0.24), transparent 70%),
-    radial-gradient(560px 400px at 82% 58%, rgba(112, 102, 160, 0.2), transparent 70%);
+  flex: 1;
+  height: 1px;
+  background: var(--border);
 }
 
-.ambient-glow > * {
-  position: relative;
+.auth-message {
+  padding: 0.75rem 1rem;
+  border-radius: var(--radius);
+  font-size: 0.92rem;
+  font-weight: 500;
+}
+
+.auth-message.good {
+  background: var(--accent-bg);
+  color: var(--text);
+}
+
+.auth-message.bad {
+  background: rgba(209, 61, 61, 0.1);
+  color: var(--miss);
+}
+
+html[data-theme='dark'] .auth-message.bad {
+  color: #ef8a8a;
+}
+
+.auth-links {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 0.5rem 1rem;
+  font-size: 0.92rem;
+  font-weight: 600;
+}
+
+.account-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.6rem 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.account-row dt {
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.account-row dd {
+  margin: 0;
+  text-align: right;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.account-toggle {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 0.9rem 1rem;
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius);
+  cursor: pointer;
+}
+
+.account-toggle input {
+  margin-top: 0.4rem;
+  accent-color: var(--duel);
+  width: 1.1rem;
+  height: 1.1rem;
+  flex: none;
+}
+
+.account-toggle span {
+  display: grid;
+  gap: 0.15rem;
+}
+
+.account-toggle small {
+  color: var(--text-muted);
+  font-weight: 500;
 }
 
 /* ── Forms ───────────────────────────────────────────────────────────── */
 
 .field {
   display: grid;
-  gap: 0.35rem;
+  gap: 0.4rem;
   margin-bottom: 1rem;
 }
 
 .field label {
   font-size: 0.85rem;
-  font-weight: 500;
-  color: var(--text-muted);
+  font-weight: 700;
+  color: var(--text-dim);
 }
 
 .field input[type='text'],
 .field input[type='email'],
-.field input[type='password'],
-.field select {
+.field input[type='password'] {
   width: 100%;
-  padding: 0.7rem 0.9rem;
+  padding: 0.75rem 0.9rem;
   font: inherit;
+  font-weight: 500;
   color: var(--text);
-  background: var(--surface-raised);
-  border: 1px solid var(--border);
+  background: var(--surface);
+  border: 1.5px solid var(--border);
   border-radius: var(--radius);
 }
 
-.field input:focus-visible,
-.field select:focus-visible,
-.btn-primary:focus-visible,
-.btn-secondary:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 2px;
+.field input:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 1px;
+  border-color: var(--accent);
+}
+
+.field small {
+  color: var(--text-muted);
+  font-size: 0.85rem;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  html {
-    scroll-behavior: auto;
-  }
   .btn-primary,
   .btn-secondary {
     transition: none;
   }
-}
-
-/* ── The member pages: sign in, sign up, reset, account ──────────────── */
-
-.auth-card {
-    max-width: 26rem;
-    margin: 3rem auto 4rem;
-    padding: 2.25rem;
-    display: grid;
-    gap: 1rem;
-}
-
-.auth-card h1 {
-    margin: 0;
-    font-size: 1.7rem;
-}
-
-.auth-card p {
-    margin: 0;
-}
-
-.btn-block {
-    display: block;
-    width: 100%;
-    text-align: center;
-}
-
-.auth-divider {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    color: var(--text-muted);
-    font-size: 0.85rem;
-}
-
-.auth-divider::before,
-.auth-divider::after {
-    content: '';
-    flex: 1;
-    height: 1px;
-    background: var(--border);
-}
-
-.auth-message {
-    padding: 0.75rem 1rem;
-    border-radius: var(--radius);
-    font-size: 0.9rem;
-}
-
-.auth-message.good {
-    background: var(--accent-bg);
-    color: var(--text);
-}
-
-.auth-message.bad {
-    background: rgba(163, 58, 72, 0.1);
-    color: var(--signature);
-}
-
-.auth-links {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: space-between;
-    gap: 0.5rem 1rem;
-    font-size: 0.9rem;
-}
-
-.account-row {
-    display: flex;
-    align-items: baseline;
-    justify-content: space-between;
-    gap: 1rem;
-    padding: 0.6rem 0;
-    border-bottom: 1px solid var(--border);
-}
-
-.account-row dt {
-    color: var(--text-muted);
-    font-size: 0.85rem;
-}
-
-.account-row dd {
-    margin: 0;
-    text-align: right;
-    overflow-wrap: anywhere;
-}
-
-.account-toggle {
-    display: flex;
-    align-items: flex-start;
-    gap: 0.75rem;
-    padding: 0.9rem 1rem;
-    border: 1px solid var(--accent-border);
-    border-radius: var(--radius);
-    cursor: pointer;
-}
-
-.account-toggle input {
-    margin-top: 0.4rem;
-    accent-color: var(--accent);
-    width: 1rem;
-    height: 1rem;
-    flex: none;
-}
-
-.account-toggle span {
-    display: grid;
-    gap: 0.15rem;
-}
-
-.account-toggle small {
-    color: var(--text-muted);
+  .btn-primary:hover,
+  .btn-secondary:hover {
+    transform: none;
+  }
 }

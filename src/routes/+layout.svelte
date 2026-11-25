@@ -1,4 +1,5 @@
 <script>
+    import '../app.css';
     import { setLocale, t } from '#lib/i18n/index.js';
     /** @type {{ data: import('./$types').LayoutData, children?: import('svelte').Snippet }} */
     let { data, children } = $props();
@@ -38,34 +39,43 @@
     <meta name="description" content={$t('site.description')} />
     <meta property="og:site_name" content="oulipo.party" />
     <meta property="og:description" content={$t('site.description')} />
-    <meta name="theme-color" content="#5a6e65" />
+    <meta name="theme-color" content="#ffffff" />
 </svelte:head>
 
+<div class="stripe" aria-hidden="true"></div>
+
 <header class="site-head">
-    <a class="wordmark" href="/">oulipo.party</a>
-    <nav aria-label={$t('nav.language')}>
-        {#each LANGUAGES as language (language.code)}
-            <button
-                class="chip"
-                class:current={data.locale === language.code}
-                onclick={() => switchLanguage(language.code)}
-                aria-current={data.locale === language.code ? 'true' : undefined}
-            >
-                {language.name}
+    <div class="site-head-in">
+        <a class="wordmark" href="/">oulipo<span>.party</span></a>
+        <nav aria-label={$t('nav.language')}>
+            {#each LANGUAGES as language (language.code)}
+                <button
+                    class="chip"
+                    class:current={data.locale === language.code}
+                    onclick={() => switchLanguage(language.code)}
+                    aria-current={data.locale === language.code ? 'true' : undefined}
+                >
+                    {language.name}
+                </button>
+            {/each}
+            <button class="chip" onclick={toggleTheme} title={$t('nav.theme')} aria-label={$t('nav.theme')}>
+                <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
+                    <circle cx="12" cy="12" r="4.2" fill="currentColor" />
+                    <path
+                        d="M12 2.5v2.4M12 19.1v2.4M2.5 12h2.4M19.1 12h2.4M5.3 5.3l1.7 1.7M17 17l1.7 1.7M5.3 18.7L7 17M17 7l1.7-1.7"
+                        stroke="currentColor"
+                        stroke-width="1.9"
+                        stroke-linecap="round"
+                    />
+                </svg>
             </button>
-        {/each}
-        <button class="chip" onclick={toggleTheme} title={$t('nav.theme')} aria-label={$t('nav.theme')}>
-            <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true">
-                <path d="M12 3v2M12 19v2M3 12h2M19 12h2M5.6 5.6l1.4 1.4M17 17l1.4 1.4M5.6 18.4L7 17M17 7l1.4-1.4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" />
-                <circle cx="12" cy="12" r="4" fill="none" stroke="currentColor" stroke-width="1.6" />
-            </svg>
-        </button>
-        {#if data.member}
-            <a class="chip" href="/account">{$t('nav.account')}</a>
-        {:else}
-            <a class="chip" href="/sign-in">{$t('nav.signin')}</a>
-        {/if}
-    </nav>
+            {#if data.member}
+                <a class="chip pill" href="/account">{$t('nav.account')}</a>
+            {:else}
+                <a class="chip pill" href="/sign-in">{$t('nav.signin')}</a>
+            {/if}
+        </nav>
+    </div>
 </header>
 
 <main class="site-main">
@@ -78,35 +88,48 @@
 
 <style>
     .site-head {
+        position: sticky;
+        top: 0;
+        z-index: 10;
+        background: var(--bg);
+        border-bottom: 1px solid var(--border);
+    }
+    .site-head-in {
         max-width: 760px;
         margin: 0 auto;
-        padding: 1.1rem 1.25rem 0;
+        padding: 0.7rem 1.25rem;
         display: flex;
         align-items: center;
         justify-content: space-between;
-        gap: 1rem;
+        gap: 0.5rem 1rem;
         flex-wrap: wrap;
     }
     .wordmark {
         font-family: var(--font-display);
         font-weight: 900;
-        font-size: 1.25rem;
-        letter-spacing: -0.01em;
+        font-size: 1.45rem;
+        letter-spacing: -0.035em;
         color: var(--text);
         text-decoration: none;
+        line-height: 1;
+        padding: 0.4rem 0;
+    }
+    .wordmark span {
+        color: var(--accent);
     }
     nav {
         display: flex;
         align-items: center;
-        gap: 0.35rem;
+        gap: 0.1rem;
         flex-wrap: wrap;
     }
     .chip {
-        font: inherit;
-        font-size: 0.85rem;
-        padding: 0.35rem 0.7rem;
-        border-radius: 999px;
-        border: 1px solid transparent;
+        font-family: var(--font-body);
+        font-size: 0.9rem;
+        font-weight: 600;
+        padding: 0.45rem 0.7rem;
+        border-radius: 8px;
+        border: none;
         background: transparent;
         color: var(--text-muted);
         cursor: pointer;
@@ -114,23 +137,69 @@
         display: inline-flex;
         align-items: center;
         gap: 0.3rem;
-        transition: color 0.2s, border-color 0.2s;
+        transition: color 0.15s, background 0.15s;
     }
-    .chip:hover,
+    .chip:hover {
+        color: var(--text);
+        background: var(--surface-raised);
+    }
+    /* The language being read is underlined, thick and in the game's blue. */
     .chip.current {
-        color: var(--accent);
-        border-color: var(--accent-border);
+        color: var(--text);
+        text-decoration: underline;
+        text-decoration-color: var(--accent);
+        text-decoration-thickness: 3px;
+        text-underline-offset: 7px;
+        border-radius: 8px 8px 0 0;
+    }
+    .chip.pill {
+        border: 1.5px solid var(--text);
+        color: var(--text);
+        border-radius: 999px;
+        padding: 0.4rem 0.95rem;
+        margin-left: 0.4rem;
+    }
+    .chip.pill:hover {
+        background: var(--contrast-bg);
+        color: var(--contrast-text);
     }
     .chip:focus-visible {
-        outline: 2px solid var(--accent);
+        outline: 3px solid var(--accent);
         outline-offset: 2px;
     }
     .site-foot {
         max-width: 760px;
         margin: 0 auto;
         padding: 1rem 1.25rem 2.5rem;
-        font-size: 0.8rem;
-        color: var(--text-muted);
+        font-size: 0.85rem;
+        font-weight: 500;
+    }
+    /* On a narrow screen: the wordmark above, then one row with the languages
+       and the theme on the left and the account on the right. */
+    @media (max-width: 520px) {
+        .site-head-in {
+            flex-direction: column;
+            align-items: center;
+            gap: 0.2rem;
+            padding: 0.6rem 0.75rem 0.5rem;
+        }
+        .wordmark {
+            font-size: 1.3rem;
+            padding: 0.2rem 0;
+        }
+        nav {
+            width: 100%;
+            justify-content: space-between;
+            gap: 0;
+        }
+        .chip {
+            font-size: 0.85rem;
+            padding: 0.4rem 0.45rem;
+        }
+        .chip.pill {
+            margin-left: auto;
+            padding: 0.35rem 0.8rem;
+        }
     }
     @media (prefers-reduced-motion: reduce) {
         .chip {
