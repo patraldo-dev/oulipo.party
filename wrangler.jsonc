@@ -38,11 +38,14 @@
 	"vars": {
 		"BETTER_AUTH_URL": "https://oulipo.party",
 		"EMAIL_FROM": "oulipo.party <noreply@oulipo.party>",
-		// The same OAuth applications patrouch.ca uses, with this site's
-		// redirect addresses added to them. A provider is only offered when
-		// its id and its secret are both present.
+		// A provider is offered only when its id and its secret are both set
+		// (the secrets are set apart, see the note above). Google allows a
+		// project several return addresses, so this is patrouch.ca's project
+		// with this site's added. A GitHub OAuth application allows exactly
+		// one, so GitHub needs an application of this site's own; so does
+		// Discord.
 		"GOOGLE_CLIENT_ID": "935787532460-ontb8nl83kv1uce52tige0ceidnm62d.apps.googleusercontent.com",
-		"GITHUB_CLIENT_ID": "Ov23liiPv6DX5DfTr9tN",
+		"GITHUB_CLIENT_ID": "",
 		"DISCORD_CLIENT_ID": ""
 	},
 	"env": {
@@ -67,7 +70,7 @@
 				"BETTER_AUTH_URL": "https://staging.oulipo.party",
 				"EMAIL_FROM": "oulipo.party (staging) <staging@oulipo.party>",
 				"GOOGLE_CLIENT_ID": "935787532460-ontb8nl83kv1uce52tige0ceidnm62d.apps.googleusercontent.com",
-				"GITHUB_CLIENT_ID": "Ov23liiPv6DX5DfTr9tN",
+				"GITHUB_CLIENT_ID": "",
 				"DISCORD_CLIENT_ID": ""
 			}
 		}

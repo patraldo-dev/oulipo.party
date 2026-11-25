@@ -82,6 +82,10 @@ Each provider's application must list this site's return addresses:
 - `https://oulipo.party/api/auth/callback/google`, `github`, `discord`
 - `https://staging.oulipo.party/api/auth/callback/google`, `github`, `discord`
 
+A Google project takes several return addresses, so patrouch.ca's project
+serves here too. A GitHub OAuth application takes exactly one, and a Discord
+application takes several; so GitHub needs an application of this site's own.
+
 ### Mail
 
 Sign-up verification and password reset go through Cloudflare's Email
