@@ -39,14 +39,15 @@
 		"BETTER_AUTH_URL": "https://oulipo.party",
 		"EMAIL_FROM": "oulipo.party <noreply@oulipo.party>",
 		// A provider is offered only when its id and its secret are both set
-		// (the secrets are set apart, see the note above). Google allows a
-		// project several return addresses, so this is patrouch.ca's project
-		// with this site's added. A GitHub OAuth application allows exactly
-		// one, so GitHub needs an application of this site's own; so does
-		// Discord.
-		"GOOGLE_CLIENT_ID": "935787532460-ontb8nl83kv1uce52tige0ceidnm62d.apps.googleusercontent.com",
+		// (the secrets are set apart, see the note above). Google and Discord
+		// both allow an application several return addresses, so this is the
+		// project and the application the ambientx accounts site already uses,
+		// with this site's two addresses to be added to each. A GitHub OAuth
+		// application allows exactly one return address, so GitHub needs an
+		// application of this site's own.
+		"GOOGLE_CLIENT_ID": "186062141805-7qc8lhn4p9t57bmrh4b0s54v6145haan.apps.googleusercontent.com",
 		"GITHUB_CLIENT_ID": "",
-		"DISCORD_CLIENT_ID": ""
+		"DISCORD_CLIENT_ID": "1535696170540863588"
 	},
 	"env": {
 		"staging": {
@@ -69,9 +70,9 @@
 			"vars": {
 				"BETTER_AUTH_URL": "https://staging.oulipo.party",
 				"EMAIL_FROM": "oulipo.party (staging) <staging@oulipo.party>",
-				"GOOGLE_CLIENT_ID": "935787532460-ontb8nl83kv1uce52tige0ceidnm62d.apps.googleusercontent.com",
+				"GOOGLE_CLIENT_ID": "186062141805-7qc8lhn4p9t57bmrh4b0s54v6145haan.apps.googleusercontent.com",
 				"GITHUB_CLIENT_ID": "",
-				"DISCORD_CLIENT_ID": ""
+				"DISCORD_CLIENT_ID": "1535696170540863588"
 			}
 		}
 	}
