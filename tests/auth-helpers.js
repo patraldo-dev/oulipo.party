@@ -6,17 +6,18 @@ import { authSchema } from '../src/lib/db/auth-schema.js';
 
 export const ORIGIN = 'http://localhost:3000';
 const SECRET = 'a-secret-that-is-long-enough-for-the-sign-in-tests';
-const TABLES = [authSchema.user, authSchema.session, authSchema.account, authSchema.verification];
+const TABLES = [authSchema.user, authSchema.session, authSchema.account, authSchema.verification, authSchema.rateLimit];
 
 /**
  * The site's own auth module over an in-memory database that answers like
- * Cloudflare D1. The four tables come from the schema file the library's
- * generator wrote, with their unique columns enforced, so the tests cannot
- * drift from what the library expects.
+ * Cloudflare D1. The tables come from the schema file the library's generator
+ * wrote, with their unique columns enforced, so the tests cannot drift from
+ * what the library expects. `tables` leaves any out, to stand for a database
+ * a migration has not reached yet.
  */
-export async function setup(extraEnv = {}) {
+export async function setup(extraEnv = {}, tables = TABLES) {
     const sqlite = new DatabaseSync(':memory:');
-    for (const table of TABLES) {
+    for (const table of tables) {
         const { name, columns } = getTableConfig(table);
         const definitions = columns.map(
             (column) =>

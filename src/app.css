@@ -228,6 +228,12 @@ a {
   color: var(--text);
 }
 
+/* A state of things: neither good news nor a failure. */
+.auth-message.note {
+  background: var(--accent-bg);
+  color: var(--text);
+}
+
 .auth-message.bad {
   background: rgba(209, 61, 61, 0.1);
   color: var(--miss);

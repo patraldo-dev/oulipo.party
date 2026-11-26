@@ -18,18 +18,23 @@
     async function askForLink() {
         busy = true;
         error = '';
-        const { error: refused } = await authClient.requestPasswordReset({
-            email: email.trim().toLowerCase(),
-            redirectTo: `${location.origin}/reset-password`
-        });
-        busy = false;
-        // An address that has no account is told the same as one that has,
+        // Asked through the site's own endpoint, which waits to know whether
+        // the mail left: the library's own answers before it is sent. An
+        // address that has no account is answered the same as one that has,
         // so nobody can find out who is a member.
-        if (refused && refused.status !== 0 && refused.code !== 'USER_NOT_FOUND') {
-            error = messageFor(refused);
+        const answer = await fetch('/api/reset-link', {
+            method: 'POST',
+            headers: { 'content-type': 'application/json' },
+            body: JSON.stringify({ email: email.trim().toLowerCase() })
+        }).catch(() => null);
+        busy = false;
+        if (answer?.status === 429) {
+            error = 'error.too_many';
             return;
         }
-        sent = true;
+        const left = answer?.ok && (await answer.json().catch(() => null))?.sent === true;
+        if (left) sent = true;
+        else error = 'reset.failed';
     }
 
     async function savePassword() {

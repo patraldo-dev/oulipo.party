@@ -66,6 +66,11 @@ wrangler deploy --env staging
 wrangler deploy
 ```
 
+A migration is applied to a database **before** any code that reads it is
+deployed there. For `0004_rate_limit.sql` this is not a formality: the
+sign-in library reads that table on every sign-in request, and without it
+every such request fails.
+
 A deploy runs the build itself. Pushing to `main` deploys nothing until the
 repository is connected to Workers Builds.
 
@@ -89,9 +94,10 @@ Each provider's application must list this site's return addresses:
 - `https://oulipo.party/api/auth/callback/google`, `github`, `discord`
 - `https://staging.oulipo.party/api/auth/callback/google`, `github`, `discord`
 
-A Google project takes several return addresses, so patrouch.ca's project
-serves here too. A GitHub OAuth application takes exactly one, and a Discord
-application takes several; so GitHub needs an application of this site's own.
+A Google project and a Discord application each take several return
+addresses, so this site can share an existing one once the two addresses above
+are added to it. A GitHub OAuth application takes exactly one, so GitHub needs
+an application of this site's own: one for each address.
 
 ### Mail
 
@@ -101,6 +107,19 @@ Sending: the `EMAIL` binding in `wrangler.jsonc` is the credential, and
 once, in the dashboard (Compute → Email Service → Email Sending). On the
 Workers Free plan it only reaches addresses verified on the account; writing to
 anyone else needs Workers Paid.
+
+Until mail can leave, the site says what is true rather than what was hoped:
+a sign-up succeeds and the member plays, the account page answers a request
+for the verification link with "could not be sent", and a password reset is
+not reported as on its way. (The library's own reset endpoint answers before
+the mail is sent, which is why the page asks `POST /api/reset-link` instead.)
+
+### Attempts
+
+The sign-in library's limits on attempts are kept in the database (`rate_limit`):
+three sign-in attempts in ten seconds, three reset or verification requests in
+a minute, per address. The library's defaults would switch them off here: it
+keeps its count in memory, and this site builds an instance for each request.
 
 ## Members and the board
 

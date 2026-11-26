@@ -99,6 +99,18 @@ export const verification = sqliteTable(
   (table) => [index("verification_identifier_idx").on(table.identifier)],
 );
 
+// Where the library keeps its count of attempts, one row per address and
+// path (migrations/0004_rate_limit.sql). Written from the library's own
+// definition of that table, for rateLimit.storage "database", since its
+// generator is not installed here. The time of the last request is a plain
+// number of milliseconds, not a date: the library writes it as one.
+export const rateLimit = sqliteTable("rate_limit", {
+  id: text("id").primaryKey(),
+  key: text("key").notNull().unique(),
+  count: integer("count").notNull(),
+  lastRequest: integer("last_request").notNull(),
+});
+
 export const userRelations = relations(user, ({ many }) => ({
   sessions: many(session),
   accounts: many(account),
@@ -124,6 +136,7 @@ export const authSchema = {
   session,
   account,
   verification,
+  rateLimit,
   userRelations,
   sessionRelations,
   accountRelations,

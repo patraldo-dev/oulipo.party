@@ -72,12 +72,16 @@
     {#if data.member.emailVerified}
         <p class="auth-message good">{$t('account.verified')}</p>
     {:else}
-        <p class="auth-message bad">
+        <p class="auth-message note">
             {$t('account.unverified')}
             <button class="btn-secondary" type="button" onclick={sendLinkAgain} disabled={busy} style="margin-top: 0.6rem;">
                 {$t('account.resend')}
             </button>
         </p>
+    {/if}
+
+    {#if text}
+        <p class="auth-message {message}">{$t(text)}</p>
     {/if}
 
     <label class="account-toggle">
@@ -87,10 +91,6 @@
             <small>{$t('account.scoreboard_hint')}</small>
         </span>
     </label>
-
-    {#if text}
-        <p class="auth-message {message}">{$t(text)}</p>
-    {/if}
 
     <button class="btn-secondary" type="button" onclick={signOut}>{$t('nav.signout')}</button>
 </section>

@@ -4,7 +4,10 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import { signInOptions } from '../src/lib/auth.js';
+import { messageFor } from '../src/lib/auth-pages.js';
+import { sendResetLink, signInOptions } from '../src/lib/auth.js';
+import { authSchema } from '../src/lib/db/auth-schema.js';
+import { resetMail } from '../src/lib/server/email-sender.js';
 import { ORIGIN, arrives, errorsLogged, request, setup } from './auth-helpers.js';
 
 const SENDER = { name: 'oulipo.party', email: 'noreply@oulipo.party' };
@@ -131,6 +134,163 @@ test('when Cloudflare accepts, the mail leaves with the sign-up and nothing is l
     assert.deepEqual(logged, []);
 });
 
+test('a member who asks for the link again is not told it left when it did not', async () => {
+    const refused = () => {
+        throw Object.assign(new Error('destination address is not a verified address'), {
+            code: 'E_RECIPIENT_NOT_ALLOWED'
+        });
+    };
+    const { auth } = await setup(cloudflare(async () => refused()));
+    await errorsLogged(async () => {
+        await request(auth, 'POST', '/api/auth/sign-up/email', MEMBER);
+    });
+    let again;
+    await errorsLogged(async () => {
+        again = await request(auth, 'POST', '/api/auth/send-verification-email', { email: MEMBER.email, callbackURL: '/' });
+    });
+    assert.notEqual(again.status, 200, 'the answer is not a yes');
+    assert.equal(messageFor(again.json), 'error.generic', 'which the account page reads as "could not be sent"');
+});
+
+test('nor with no mail service on the Worker at all', async () => {
+    const { auth } = await setup();
+    await request(auth, 'POST', '/api/auth/sign-up/email', MEMBER);
+    const again = await request(auth, 'POST', '/api/auth/send-verification-email', { email: MEMBER.email, callbackURL: '/' });
+    assert.notEqual(again.status, 200);
+});
+
+test('and is told it left when it did', async () => {
+    const sent = [];
+    const { auth } = await setup(cloudflare(async (message) => void sent.push(message)));
+    await request(auth, 'POST', '/api/auth/sign-up/email', MEMBER);
+    const again = await request(auth, 'POST', '/api/auth/send-verification-email', { email: MEMBER.email, callbackURL: '/' });
+    assert.equal(again.status, 200, JSON.stringify(again.json));
+    assert.equal(sent.length, 2, 'one with the sign-up, one for the asking');
+    assert.equal(sent[1].to, MEMBER.email);
+});
+
+// ── The password-reset link ───────────────────────────────────────────
+
+/** A mail Cloudflare refuses on the Free plan, to an address it has not verified. */
+const REFUSED = () => {
+    throw Object.assign(new Error('destination address is not a verified address'), { code: 'E_RECIPIENT_NOT_ALLOWED' });
+};
+const MEMBER_HEADERS = new Headers({ origin: ORIGIN, 'cf-connecting-ip': '203.0.113.7', 'accept-language': 'fr' });
+const resetLink = (env, email) => sendResetLink(env, email, `${ORIGIN}/reset-password`, MEMBER_HEADERS);
+
+test('a reset mail that could not be sent is not reported as sent', async () => {
+    const { auth, env } = await setup(cloudflare(async () => REFUSED()));
+    await errorsLogged(async () => {
+        await request(auth, 'POST', '/api/auth/sign-up/email', MEMBER);
+    });
+    // Why the page does not ask the library directly.
+    const library = await request(auth, 'POST', '/api/auth/request-password-reset', { email: MEMBER.email, redirectTo: `${ORIGIN}/reset-password` });
+    assert.equal(library.status, 200, 'the library says yes before the mail is sent');
+    const logged = await errorsLogged(async () => {
+        assert.deepEqual(await resetLink(env, MEMBER.email), { sent: false, tooMany: false });
+    });
+    assert.ok(logged.some((line) => line.includes('not a verified address')), 'the refusal is still in the log');
+});
+
+test('a reset mail that leaves is reported as sent, to the member, with a link', async () => {
+    const sent = [];
+    const { auth, env } = await setup(cloudflare(async (message) => void sent.push(message)));
+    await request(auth, 'POST', '/api/auth/sign-up/email', MEMBER);
+    const before = sent.length;
+    assert.deepEqual(await resetLink(env, '  New.Member@Example.com '), { sent: true, tooMany: false });
+    assert.equal(sent.length, before + 1);
+    assert.equal(sent[before].to, MEMBER.email, 'the address is trimmed and lower-cased, as the library stores it');
+    assert.match(sent[before].html, /reset-password\?token=[A-Za-z0-9]+/);
+    // The member's own language travels with the request.
+    assert.equal(sent[before].subject, resetMail('fr', '').subject);
+    assert.equal(sent[before].html.split('\n')[0], resetMail('fr', '').html.split('\n')[0]);
+});
+
+test('an address with no account is answered like any other, and is sent nothing', async () => {
+    const sent = [];
+    const { env } = await setup(cloudflare(async (message) => void sent.push(message)));
+    assert.deepEqual(await resetLink(env, 'nobody@example.com'), { sent: true, tooMany: false });
+    assert.deepEqual(sent, []);
+});
+
+test('a Worker with no mail service cannot send it, and says so', async () => {
+    const { auth, env } = await setup();
+    await request(auth, 'POST', '/api/auth/sign-up/email', MEMBER);
+    assert.deepEqual(await resetLink(env, MEMBER.email), { sent: false, tooMany: false });
+});
+
+test('asking again and again is cut off at three a minute', async () => {
+    const sent = [];
+    const { env } = await setup(cloudflare(async (message) => void sent.push(message)));
+    const answers = [];
+    for (let asking = 0; asking < 5; asking++) {
+        await errorsLogged(async () => {
+            answers.push(await resetLink(env, 'someone@example.com'));
+        });
+    }
+    assert.deepEqual(
+        answers.map((answer) => answer.tooMany),
+        [false, false, false, true, true]
+    );
+    assert.deepEqual(sent, [], 'nobody has that address, so nothing is sent either way');
+});
+
+// ── The limit on attempts ─────────────────────────────────────────────
+
+test('wrong passwords are cut off: the fourth within ten seconds is not even looked at', async () => {
+    const { auth } = await setup();
+    await request(auth, 'POST', '/api/auth/sign-up/email', MEMBER);
+    const statuses = [];
+    for (let attempt = 0; attempt < 5; attempt++) {
+        statuses.push(
+            (
+                await request(
+                    auth,
+                    'POST',
+                    '/api/auth/sign-in/email',
+                    { email: MEMBER.email, password: 'not-the-password' },
+                    { origin: ORIGIN, 'cf-connecting-ip': '203.0.113.9' }
+                )
+            ).status
+        );
+    }
+    assert.deepEqual(statuses, [401, 401, 401, 429, 429]);
+    assert.equal(messageFor({ status: 429 }), 'error.too_many', 'which the sign-in page tells the member');
+});
+
+test('the count is kept per address, so one guesser does not lock a neighbour out', async () => {
+    const { auth } = await setup();
+    await request(auth, 'POST', '/api/auth/sign-up/email', MEMBER);
+    for (let attempt = 0; attempt < 4; attempt++) {
+        await request(
+            auth,
+            'POST',
+            '/api/auth/sign-in/email',
+            { email: MEMBER.email, password: 'not-the-password' },
+            { origin: ORIGIN, 'cf-connecting-ip': '203.0.113.9' }
+        );
+    }
+    const elsewhere = await request(
+        auth,
+        'POST',
+        '/api/auth/sign-in/email',
+        { email: MEMBER.email, password: MEMBER.password },
+        { origin: ORIGIN, 'cf-connecting-ip': '203.0.113.10' }
+    );
+    assert.equal(elsewhere.status, 200, 'the right password, from another address, signs in');
+});
+
+test('without the limit table a sign-in request fails outright: the migration comes before the code', async () => {
+    // What the order of deploying rests on. The library does not step over a
+    // missing table, so migrations/0004_rate_limit.sql is applied to a
+    // database before any code that reads it is deployed there.
+    const { auth } = await setup({}, [authSchema.user, authSchema.session, authSchema.account, authSchema.verification]);
+    await assert.rejects(
+        request(auth, 'POST', '/api/auth/sign-up/email', MEMBER, { origin: ORIGIN, 'cf-connecting-ip': '203.0.113.11' }),
+        /no such table: rate_limit/
+    );
+});
+
 test('a Worker with no mail service still signs members up and sends nothing', async () => {
     const { auth, member } = await setup();
     const signedUp = await request(auth, 'POST', '/api/auth/sign-up/email', MEMBER);
@@ -170,7 +330,13 @@ test('Google, GitHub and Discord sign-in each start, and come back to this site'
         assert.ok(started.json.url.startsWith(startsWith), `${provider}: ${started.json.url}`);
         assert.ok(decodeURIComponent(started.json.url).includes(`${ORIGIN}/api/auth/callback/${provider}`), `${provider} returns here`);
     }
-    assert.equal((await request(auth, 'POST', '/api/auth/sign-in/social', { provider: 'nope' })).status, 404);
+    // From another address: the limit above allows three sign-in attempts in ten seconds.
+    assert.equal(
+        (
+            await request(auth, 'POST', '/api/auth/sign-in/social', { provider: 'nope' }, { 'cf-connecting-ip': '203.0.113.5' })
+        ).status,
+        404
+    );
 });
 
 test('a provider that is not set up is not offered at all', async () => {
