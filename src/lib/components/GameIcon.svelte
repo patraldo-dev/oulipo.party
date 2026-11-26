@@ -4,14 +4,16 @@
      * simple glyph drawn as geometry, so it stays crisp from a phone up to
      * the hero. Decorative unless a label is given: the heading beside it
      * says what it is.
-     * @type {{ icon: 'duel' | 'prompt' | 'write' | 'send' | 'score' | 'sappho' | 'board', size?: number, label?: string }}
+     * @type {{ icon: 'duel' | 'siege' | 'prompt' | 'write' | 'send' | 'score' | 'sappho' | 'board', size?: number, label?: string }}
      */
     let { icon, size = 40, label = '' } = $props();
 
     /** The colour of each tile, and the colour of its glyph. */
     const TILES = {
-        /** The game: your words against hers, bubble to bubble. */
+        /** The Duel: your words against hers, bubble to bubble. */
         duel: ['#2b59ff', '#ffffff'],
+        /** The Siege: many voices against hers. */
+        siege: ['#b3261e', '#ffffff'],
         /** Today's prompt: a spark. */
         prompt: ['#f7c948', '#121212'],
         /** Your piece: the pen. */
@@ -47,6 +49,21 @@
             <circle cx="34" cy="38.5" r="2.2" fill="currentColor" />
             <circle cx="41" cy="38.5" r="2.2" fill="currentColor" />
             <circle cx="48" cy="38.5" r="2.2" fill="currentColor" />
+        {:else if icon === 'siege'}
+            <rect x="28" y="8" width="30" height="18" rx="6" fill="currentColor" />
+            <path d="M50 25 L55 33 L44 26 Z" fill="currentColor" />
+            <circle cx="38" cy="17" r="2.4" fill={background} />
+            <circle cx="45" cy="17" r="2.4" fill={background} />
+            <circle cx="52" cy="17" r="2.4" fill={background} />
+            <rect x="6" y="24" width="30" height="20" rx="6" fill="currentColor" />
+            <path d="M14 43 L10 52 L23 44 Z" fill="currentColor" />
+            <circle cx="16" cy="34" r="2.6" fill={background} />
+            <circle cx="24" cy="34" r="2.6" fill={background} />
+            <circle cx="32" cy="34" r="2.6" fill={background} />
+            <rect x="30" y="38" width="27" height="16" rx="5.5" fill={background} stroke="currentColor" stroke-width="3.5" />
+            <circle cx="39" cy="46" r="2.1" fill="currentColor" />
+            <circle cx="46" cy="46" r="2.1" fill="currentColor" />
+            <circle cx="53" cy="46" r="2.1" fill="currentColor" />
         {:else if icon === 'prompt'}
             <path d="M32 9 C34.6 25 39 29.4 55 32 C39 34.6 34.6 39 32 55 C29.4 39 25 34.6 9 32 C25 29.4 29.4 25 32 9 Z" fill="currentColor" />
         {:else if icon === 'write'}

@@ -1,42 +1,23 @@
-// / — the solitaire duel. Everything the page needs before the player locks
-// comes from here; the draft itself only ever arrives through the lock
-// endpoint, inside a locked round.
-import { duelDay, getBoard, readDraft, readPrompt, readRound, roundView } from '#lib/server/oulipo-duel.js';
+// / — the day's games. The landing page offers the Duel and the Siege, and
+// says what the member has already done of each today.
+import { duelDay, readRound } from '#lib/server/oulipo-duel.js';
 
 /** @type {import('./$types').PageServerLoad} */
 export async function load({ locals }) {
     const base = { locale: locals.locale, signedIn: Boolean(locals.user) };
-    const empty = {
+    const nothing = {
         ...base,
-        unavailable: false,
-        round: null,
-        prompt: null,
-        draftReady: false,
-        board: /** @type {import('#lib/oulipo/types.js').BoardRow[]} */ ([])
+        duel: /** @type {{ score: number } | null} */ (null),
+        siege: /** @type {{ open: number, waiting: number } | null} */ (null)
     };
-    if (!locals.user) return empty;
-
-    const db = locals.db;
-    const day = duelDay();
+    if (!locals.user) return nothing;
     try {
-        const row = await readRound(db, locals.user.id, day);
-        let round = /** @type {import('#lib/oulipo/types.js').RoundView | null} */ (null);
-        if (row) {
-            const draft = await readDraft(db, row.locale, row.duel_date);
-            if (draft) round = roundView(row, draft);
-        }
-        const today = round ? null : await readPrompt(db, day, base.locale);
-        return {
-            ...base,
-            unavailable: false,
-            round,
-            prompt: today ? { id: String(today.id), text: String(today.prompt_text) } : null,
-            draftReady: Boolean(round) || Boolean(await readDraft(db, base.locale, day)),
-            board: await getBoard(db, base.locale, day, { userId: locals.user.id })
-        };
+        const round = await readRound(locals.db, locals.user.id, duelDay());
+        return { ...base, duel: round ? { score: Number(round.score) } : null, siege: null };
     } catch (error) {
-        // Until the tables exist the page simply says the duel is not open.
-        console.error('[duel] load failed:', error instanceof Error ? error.message : error);
-        return { ...empty, unavailable: true };
+        // Each game's own page says more when something is wrong; the landing
+        // page goes on offering them.
+        console.error('[home] load failed:', error instanceof Error ? error.message : error);
+        return nothing;
     }
 }

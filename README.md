@@ -41,7 +41,13 @@ and a scripted stand-in for the model.
 - `src/lib/auth.js` — members: email with a password, or Google, GitHub or
   Discord. Mail goes through Cloudflare's Email Sending
   (`src/lib/server/email-sender.js`).
-- `src/routes/+page.svelte` — the home page is the duel.
+- `src/routes/+page.svelte` — the landing page: today's games.
+- `src/routes/duel/+page.svelte` — the solitaire duel.
+- `src/lib/components/` — the pieces a game page is built from: the writing
+  space, the word picker, her rewrite. Their look is in `src/app.css`, under
+  `.game-page`.
+- `src/lib/piece.js` — what a game takes from a piece: the part that counts,
+  and the words there are to send.
 - `migrations/` — the database, in order.
 
 ## Deploy
