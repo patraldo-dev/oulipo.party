@@ -72,7 +72,9 @@
   "duel.placeholder": "Escribe aquí, con tus propias palabras…",
   "duel.words": "{n} palabras",
   "duel.too_short": "Escribe al menos {n} palabras antes de enviar ninguna.",
-  "duel.too_long": "Que no pase de {n} palabras.",
+  "duel.truncated": "{total} palabras en total. Al duelo solo van las primeras {n}.",
+  "duel.pick_one": "Elige al menos una palabra para enviar: mueve el control o toca una palabra.",
+  "duel.too_long": "Un duelo admite {n} palabras como máximo. Recarga la página y envía de nuevo: contarán las primeras {n}.",
   "duel.choose_title": "Envía tus palabras",
   "duel.choose_body": "Elige palabras de tu propio texto para prohibírselas. El control elige las primeras; toca una palabra para añadir la o quitarla. No se envía nada hasta que bloquees.",
   "duel.ropes_count": "{n} de {total} palabras elegidas",
@@ -125,5 +127,5 @@
   "duel.clear_story_confirm": "¿Borrar lo que escribiste?",
   "duel.autosave_hint": "Se guarda en este navegador hasta que lo bloquees.",
   "duel.import_replace_confirm": "¿Reemplazar lo que escribiste con las palabras de este archivo?",
-  "duel.import_cut": "El archivo es más largo de lo que admite un texto: solo se importaron sus primeras {n} palabras."
+  "duel.import_cut": "El archivo es más largo de lo que admite la caja: solo se importaron sus primeras {n} palabras."
 }

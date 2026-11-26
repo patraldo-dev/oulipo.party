@@ -11,7 +11,7 @@ and became its own site here.
 ## How a duel goes
 
 1. Sappho drafts one hidden piece per language per day, against the day's prompt.
-2. You write a piece of your own (30 to 300 words) and send some of its words.
+2. You write a piece of your own (30 to 300 words; a longer piece counts up to 300) and send some of its words.
 3. A word she used is a hit (+1); a word she did not is a miss (−1). Small words
    never count, in any of the three languages.
 4. One duel a day. After you lock it, she rewrites her piece without your words.

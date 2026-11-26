@@ -108,15 +108,39 @@
     let notice = $state('');
     /** Messages that are news, not a refusal: said in ink rather than in red. */
     const NEWS = new Set(['duel.copied', 'duel.imported', 'duel.import_cut']);
+    /** Messages about bringing a file in: shown beside the box, where that happens. */
+    const FILE_MESSAGES = new Set(['duel.imported', 'duel.import_cut', 'duel.import_empty', 'duel.import_failed']);
     const noticeIsNews = $derived(NEWS.has(notice));
     /** Passes Sappho has made so far, while the rewrite is still going. */
     let pass = $state(0);
     let pollTimer = $state(/** @type {number | undefined} */ (undefined));
 
-    const candidates = $derived(analyze(story, lang, policy).types);
-    const wordCount = $derived(countWords(story));
-    const storyFits = $derived(wordCount >= DUEL.minStoryWords && wordCount <= DUEL.maxStoryWords);
+    /**
+     * The part of the piece that goes into the duel. A piece longer than a
+     * duel takes is not refused: its first words are what count. The words
+     * to send are picked from this part, so nothing can be sent that is not
+     * in the duel.
+     */
+    const counted = $derived(fitPiece(story, DUEL.maxStoryWords, DUEL.maxStoryChars).text);
+    const totalWords = $derived(countWords(story));
+    const wordCount = $derived(countWords(counted));
+    /** The piece runs on past what a duel takes. */
+    const runsOn = $derived(wordCount < totalWords);
+    /** Enough of a piece to send words from. */
+    const storyFits = $derived(wordCount >= DUEL.minStoryWords);
+    const candidates = $derived(analyze(counted, lang, policy).types);
     const chosenSet = $derived(new Set(chosen));
+
+    /** The words of a message, with its numbers filled in. @param {string} key */
+    function noticeText(key) {
+        return fill($t(key), {
+            n: FILE_MESSAGES.has(key)
+                ? importedWords
+                : key === 'duel.too_long'
+                  ? DUEL.maxStoryWords
+                  : DUEL.minStoryWords
+        });
+    }
 
     /**
      * How much of the piece is being sent, as the game names it: a thread, a
@@ -174,7 +198,9 @@
         notice = '';
         try {
             const whole = await readPieceFile(file);
-            const { text, cut } = fitPiece(whole, DUEL.maxStoryWords, DUEL.maxStoryChars);
+            // A file fills the box, up to what the box holds. What goes into
+            // the duel is decided from the box, never from the file.
+            const { text, cut } = fitPiece(whole, Number.POSITIVE_INFINITY, DUEL.maxStoryChars);
             importedWords = countWords(text);
             if (!importedWords) {
                 notice = 'duel.import_empty';
@@ -293,7 +319,7 @@
     async function lock() {
         busy = 'lock';
         notice = '';
-        const { ok, payload } = await call('lock', { story, ropes: chosen });
+        const { ok, payload } = await call('lock', { story: counted, ropes: chosen });
         busy = '';
         if (ok && payload?.draft) {
             round = /** @type {RoundView} */ (payload);
@@ -403,17 +429,11 @@
         </div>
     </header>
 
-    <p class="notice" class:news={noticeIsNews} aria-live="polite">
-        {notice
-            ? fill($t(notice), {
-                  n: notice === 'duel.too_long'
-                      ? DUEL.maxStoryWords
-                      : notice === 'duel.imported' || notice === 'duel.import_cut'
-                        ? importedWords
-                        : DUEL.minStoryWords
-              })
-            : ''}
-    </p>
+    <!-- While writing, a message is shown beside what it is about: under the
+         box for a file, under the button for a refusal. -->
+    {#if stage !== 'write'}
+        <p class="notice" class:news={noticeIsNews} aria-live="polite">{notice ? noticeText(notice) : ''}</p>
+    {/if}
 
     {#if stage === 'unavailable'}
         <section class="glass-surface card center"><p>{$t('duel.unavailable')}</p></section>
@@ -480,11 +500,11 @@
                 {#if dragging}<p class="drop-note">{$t('duel.drop_here')}</p>{/if}
             </div>
             <div class="tools">
-                <p class="count" class:off={!storyFits && wordCount > 0}>
+                <p class="count" class:off={wordCount > 0 && wordCount < DUEL.minStoryWords}>
                     {#if wordCount < DUEL.minStoryWords}
                         {fill($t('duel.too_short'), { n: DUEL.minStoryWords })}
-                    {:else if wordCount > DUEL.maxStoryWords}
-                        {fill($t('duel.too_long'), { n: DUEL.maxStoryWords })}
+                    {:else if runsOn}
+                        {fill($t('duel.truncated'), { total: totalWords, n: DUEL.maxStoryWords })}
                     {:else}
                         {fill($t('duel.words'), { n: wordCount })}
                     {/if}
@@ -499,6 +519,9 @@
                     </button>
                 </div>
             </div>
+            {#if notice && FILE_MESSAGES.has(notice)}
+                <p class="notice" class:news={noticeIsNews} aria-live="polite">{noticeText(notice)}</p>
+            {/if}
             <p class="note">{$t('duel.import_hint')}</p>
             <input
                 bind:this={fileInput}
@@ -560,8 +583,20 @@
                     <button class="btn-primary big" type="button" onclick={lock} disabled={busy !== '' || !storyFits || chosen.length < DUEL.minRopes}>
                         {busy === 'lock' ? '…' : $t('duel.lock')}
                     </button>
-                    <span class="note">{$t('duel.lock_hint')}</span>
+                    <!-- Beside the button: why it is off, while it is off; what it does, once it is on. -->
+                    <span class="note">
+                        {#if !storyFits}
+                            {fill($t('duel.too_short'), { n: DUEL.minStoryWords })}
+                        {:else if chosen.length < DUEL.minRopes}
+                            {$t('duel.pick_one')}
+                        {:else}
+                            {$t('duel.lock_hint')}
+                        {/if}
+                    </span>
                 </div>
+                {#if notice && !FILE_MESSAGES.has(notice)}
+                    <p class="notice" aria-live="assertive">{noticeText(notice)}</p>
+                {/if}
             </section>
         {/if}
     {:else if stage === 'locked' && round}
@@ -860,6 +895,9 @@
         width: 100%;
         resize: vertical;
         min-height: 12rem;
+        /* A long piece scrolls inside the box rather than pushing the duel off the page. */
+        max-height: 70vh;
+        overflow: auto;
         line-height: 1.7;
         font-family: var(--font-reading);
         font-size: 1.1rem;

@@ -72,7 +72,9 @@
   "duel.placeholder": "Écris ici, avec tes propres mots…",
   "duel.words": "{n} mots",
   "duel.too_short": "Écris au moins {n} mots avant d'en envoyer.",
-  "duel.too_long": "Reste à {n} mots au maximum.",
+  "duel.truncated": "{total} mots en tout. Seuls les {n} premiers entrent dans le duel.",
+  "duel.pick_one": "Choisis au moins un mot à envoyer : bouge le curseur ou touche un mot.",
+  "duel.too_long": "Un duel accepte {n} mots au maximum. Recharge la page et renvoie : seuls les {n} premiers compteront.",
   "duel.choose_title": "Envoie tes mots",
   "duel.choose_body": "Choisis des mots de ton propre texte à lui interdire. Le curseur choisit les premiers ; touche un mot pour l’ajouter ou le retirer. Rien ne part avant que tu verrouilles.",
   "duel.ropes_count": "{n} mots choisis sur {total}",
@@ -125,5 +127,5 @@
   "duel.clear_story_confirm": "Effacer ce que tu as écrit ?",
   "duel.autosave_hint": "Gardé dans ce navigateur jusqu’au verrouillage.",
   "duel.import_replace_confirm": "Remplacer ce que tu as écrit par les mots de ce fichier ?",
-  "duel.import_cut": "Le fichier est plus long que ce qu’un texte peut contenir : seuls ses {n} premiers mots ont été importés."
+  "duel.import_cut": "Le fichier est plus long que ce que la zone peut contenir : seuls ses {n} premiers mots ont été importés."
 }

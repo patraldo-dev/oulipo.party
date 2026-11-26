@@ -72,7 +72,9 @@
   "duel.placeholder": "Write here, in your own words…",
   "duel.words": "{n} words",
   "duel.too_short": "Write at least {n} words before you send any.",
-  "duel.too_long": "Keep it to {n} words or fewer.",
+  "duel.truncated": "{total} words in all. Only the first {n} go into the duel.",
+  "duel.pick_one": "Pick at least one word to send: move the slider or tap a word.",
+  "duel.too_long": "A duel takes {n} words at most. Reload the page and send again: the first {n} will count.",
   "duel.choose_title": "Send your words",
   "duel.choose_body": "Pick words from your own piece to forbid her. The slider picks the first ones; tap a word to add it or take it back. Nothing is sent until you lock in.",
   "duel.ropes_count": "{n} of {total} words picked",
@@ -125,5 +127,5 @@
   "duel.clear_story_confirm": "Erase what you wrote?",
   "duel.autosave_hint": "Kept in this browser until you lock it.",
   "duel.import_replace_confirm": "Replace what you wrote with the words in this file?",
-  "duel.import_cut": "The file is longer than a piece holds: only its first {n} words were brought in."
+  "duel.import_cut": "The file is longer than the box holds: only its first {n} words were brought in."
 }

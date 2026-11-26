@@ -3,11 +3,15 @@
 // from this one place, so the two can never disagree.
 
 export const DUEL = Object.freeze({
-    /** Story length a player may lock, in whitespace-separated words. */
+    /** The least a piece may be: there have to be words to send. */
     minStoryWords: 30,
+    /**
+     * A longer piece is not refused. Its first so many words are what go into
+     * the duel; the page says so, and picks the words to send from them.
+     */
     maxStoryWords: 300,
     /** Hard caps on request size, before anything reaches the model. */
-    maxStoryChars: 4000,
+    maxStoryChars: 10000,
     minRopes: 1,
     /** Passes Sappho gets at the rewrite; one pass per request. */
     rewriteAttempts: 4,
