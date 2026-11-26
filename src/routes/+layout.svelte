@@ -83,7 +83,11 @@
 </main>
 
 <footer class="site-foot">
-    <a href="https://patrouch.ca">{$t('footer.origin')}</a>
+    <p class="foot-mark">oulipo<span>.party</span></p>
+    <p class="foot-inspired">{$t('footer.inspired')}</p>
+    <a class="foot-origin" href="https://patrouch.ca">
+        {$t('footer.origin')}<span class="arrow" aria-hidden="true">↗</span>
+    </a>
 </footer>
 
 <style>
@@ -167,12 +171,63 @@
         outline: 3px solid var(--accent);
         outline-offset: 2px;
     }
+    /* The foot: the name, what the game owes, and where it was born. */
     .site-foot {
         max-width: 760px;
-        margin: 0 auto;
-        padding: 1rem 1.25rem 2.5rem;
-        font-size: 0.85rem;
-        font-weight: 500;
+        margin: 1.5rem auto 0;
+        padding: 2rem 1.25rem 3rem;
+        border-top: 1px solid var(--border);
+        display: grid;
+        justify-items: center;
+        gap: 0.45rem;
+        text-align: center;
+    }
+    .foot-mark {
+        font-family: var(--font-display);
+        font-weight: 900;
+        font-size: 1.1rem;
+        letter-spacing: -0.035em;
+        line-height: 1;
+        color: var(--text);
+        margin: 0;
+    }
+    .foot-mark span {
+        color: var(--accent);
+    }
+    .foot-inspired {
+        font-family: var(--font-reading);
+        font-style: italic;
+        font-size: 1.08rem;
+        color: var(--text-dim);
+        margin: 0;
+    }
+    /* A credit, not a bare link: quiet until the pointer finds it. */
+    .foot-origin {
+        display: inline-flex;
+        align-items: baseline;
+        gap: 0.3rem;
+        margin-top: 0.4rem;
+        color: var(--text-muted);
+        font-size: 0.88rem;
+        font-weight: 600;
+        text-decoration: none;
+        border-bottom: 1px solid transparent;
+        transition: color 0.15s, border-color 0.15s;
+    }
+    .foot-origin:hover {
+        color: var(--text);
+        border-bottom-color: var(--text);
+    }
+    .foot-origin:focus-visible {
+        outline: 3px solid var(--accent);
+        outline-offset: 3px;
+    }
+    .arrow {
+        display: inline-block;
+        transition: transform 0.15s;
+    }
+    .foot-origin:hover .arrow {
+        transform: translate(2px, -2px);
     }
     /* On a narrow screen: the wordmark above, then one row with the languages
        and the theme on the left and the account on the right. */
@@ -202,7 +257,9 @@
         }
     }
     @media (prefers-reduced-motion: reduce) {
-        .chip {
+        .chip,
+        .foot-origin,
+        .arrow {
             transition: none;
         }
     }

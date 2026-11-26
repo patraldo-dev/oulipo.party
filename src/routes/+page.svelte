@@ -4,17 +4,18 @@
      prompt; the player writes one, sends some of its words against hers,
      and scores the ones her draft used. One duel a day. -->
 <script>
-    import { onMount } from 'svelte';
+    import { onMount, tick } from 'svelte';
     import { t } from '#lib/i18n/index.js';
     import GameIcon from '#lib/components/GameIcon.svelte';
     import { analyze, countWords, defaultPolicy, tierFor } from '#lib/oulipo/engine.js';
     import { DUEL } from '#lib/oulipo/duel-rules.js';
+    import { fitPiece, IMPORT_TYPES, readPieceFile } from '#lib/import-text.js';
 
     /** @typedef {import('#lib/oulipo/types.js').Span} Span */
     /** @typedef {import('#lib/oulipo/types.js').RoundView} RoundView */
     /** @typedef {{ text: string, hit: boolean }} Part */
     /** @typedef {'unavailable' | 'signin' | 'preparing' | 'write' | 'locked'} Stage */
-    /** @typedef {'' | 'prepare' | 'lock' | 'rewrite'} Busy */
+    /** @typedef {'' | 'prepare' | 'lock' | 'rewrite' | 'import'} Busy */
 
     let { data } = $props();
 
@@ -68,9 +69,35 @@
         rewrite_failed: 'duel.rewrite_failed'
     };
 
+    // ── The piece: kept, brought in, and given room ──────────────────────
+
+    /** Where the piece is kept in the member's own browser, per language. */
+    const PIECE_KEY = `oulipo.party:piece:${start.locale}`;
+
+    /** The piece kept on a former visit, or nothing. The server has none to read. */
+    function savedPiece() {
+        if (typeof localStorage === 'undefined') return '';
+        try {
+            return localStorage.getItem(PIECE_KEY) ?? '';
+        } catch {
+            // A browser that refuses storage keeps nothing; the rest works.
+            return '';
+        }
+    }
+
     let stage = $state(start.stage);
     let prompt = $state(start.prompt);
-    let story = $state('');
+    /** The piece: in the browser it starts as whatever was kept, whatever stage the
+     *  page opens in, so that none is dropped because a prompt was not ready yet. */
+    let story = $state(savedPiece());
+    /** The box the piece is written in, and the picker that brings a file in. */
+    let pieceBox = $state(/** @type {HTMLTextAreaElement | null} */ (null));
+    let fileInput = $state(/** @type {HTMLInputElement | null} */ (null));
+    /** True once the browser has taken the page over and filled the box. */
+    let live = $state(false);
+    let dragging = $state(false);
+    /** How many words the last file brought in. */
+    let importedWords = $state(0);
     /** Rope keys, in the order they will be sent. */
     let chosen = $state(/** @type {string[]} */ ([]));
     let target = $state(0);
@@ -79,6 +106,9 @@
     let busy = $state(/** @type {Busy} */ (''));
     /** i18n key of the last message shown. */
     let notice = $state('');
+    /** Messages that are news, not a refusal: said in ink rather than in red. */
+    const NEWS = new Set(['duel.copied', 'duel.imported', 'duel.import_cut']);
+    const noticeIsNews = $derived(NEWS.has(notice));
     /** Passes Sappho has made so far, while the rewrite is still going. */
     let pass = $state(0);
     let pollTimer = $state(/** @type {number | undefined} */ (undefined));
@@ -101,6 +131,100 @@
     const tierInk = $derived(TIER_INK[tier]);
     /** Where the slider stands along the piece, for the track it draws. */
     const sliderFill = $derived(candidates.length ? Math.round((target / candidates.length) * 100) : 0);
+
+    // Kept as it is written, so a closed tab or a lost connection never costs
+    // a piece. Nothing leaves the browser for it; it goes once the duel locks.
+    $effect(() => {
+        if (stage !== 'write') return;
+        try {
+            if (story) localStorage.setItem(PIECE_KEY, story);
+            else localStorage.removeItem(PIECE_KEY);
+        } catch {
+            // A browser that refuses storage keeps nothing; the rest works.
+        }
+    });
+
+    // Until the browser has taken the page over the box stays read-only: the
+    // server cannot know a kept piece, so the page arrives with the box empty,
+    // and letters typed into that empty box would take the kept piece's place.
+    $effect(() => {
+        tick().then(() => {
+            live = true;
+        });
+    });
+
+    // The box grows with the piece, from its nine lines upward.
+    $effect(() => {
+        void story;
+        tick().then(() => {
+            if (pieceBox) {
+                pieceBox.style.height = 'auto';
+                pieceBox.style.height = `${pieceBox.scrollHeight}px`;
+            }
+        });
+    });
+
+    /**
+     * Bring a file's words in as the piece. A piece already in the box gives
+     * way only on the member's word, as it does for starting over.
+     * @param {File} file
+     */
+    async function importFile(file) {
+        busy = 'import';
+        notice = '';
+        try {
+            const whole = await readPieceFile(file);
+            const { text, cut } = fitPiece(whole, DUEL.maxStoryWords, DUEL.maxStoryChars);
+            importedWords = countWords(text);
+            if (!importedWords) {
+                notice = 'duel.import_empty';
+                return;
+            }
+            if (story && !window.confirm($t('duel.import_replace_confirm'))) return;
+            story = text;
+            notice = cut ? 'duel.import_cut' : 'duel.imported';
+        } catch (error) {
+            console.error('[duel] import failed:', error instanceof Error ? error.message : error);
+            notice = 'duel.import_failed';
+        } finally {
+            busy = '';
+        }
+    }
+
+    /** @param {DragEvent} event */
+    const carriesFiles = (event) => Boolean(event.dataTransfer?.types?.includes('Files'));
+
+    /** @param {DragEvent} event */
+    function dragOver(event) {
+        if (!carriesFiles(event)) return;
+        event.preventDefault();
+        dragging = true;
+    }
+
+    /** @param {DragEvent} event */
+    function drop(event) {
+        dragging = false;
+        if (!carriesFiles(event)) return;
+        event.preventDefault();
+        const file = event.dataTransfer?.files?.[0];
+        if (file) importFile(file);
+    }
+
+    /** @param {Event} event */
+    function fileChosen(event) {
+        const input = /** @type {HTMLInputElement} */ (event.currentTarget);
+        const file = input.files?.[0];
+        if (file) importFile(file);
+        // So that picking the same file twice still brings it in.
+        input.value = '';
+    }
+
+    function startOver() {
+        if (window.confirm($t('duel.clear_story_confirm'))) {
+            story = '';
+            notice = '';
+        }
+    }
     const rewriteStatus = $derived(round?.rewrite.status ?? 'pending');
 
     // Words the player took back out of the story cannot stay sent.
@@ -174,6 +298,11 @@
         if (ok && payload?.draft) {
             round = /** @type {RoundView} */ (payload);
             stage = 'locked';
+            try {
+                localStorage.removeItem(PIECE_KEY);
+            } catch {
+                // nothing was kept
+            }
             rewrite();
             loadBoard();
         } else {
@@ -274,8 +403,16 @@
         </div>
     </header>
 
-    <p class="notice" aria-live="polite">
-        {notice ? fill($t(notice), { n: notice === 'duel.too_long' ? DUEL.maxStoryWords : DUEL.minStoryWords }) : ''}
+    <p class="notice" class:news={noticeIsNews} aria-live="polite">
+        {notice
+            ? fill($t(notice), {
+                  n: notice === 'duel.too_long'
+                      ? DUEL.maxStoryWords
+                      : notice === 'duel.imported' || notice === 'duel.import_cut'
+                        ? importedWords
+                        : DUEL.minStoryWords
+              })
+            : ''}
     </p>
 
     {#if stage === 'unavailable'}
@@ -321,22 +458,57 @@
 
         <section class="glass-surface card">
             <h2><GameIcon icon="write" />{$t('duel.story_label')}</h2>
-            <textarea
-                bind:value={story}
-                maxlength={DUEL.maxStoryChars}
-                rows="9"
-                placeholder={$t('duel.placeholder')}
-                disabled={busy !== ''}
-            ></textarea>
-            <p class="count" class:off={!storyFits}>
-                {#if wordCount < DUEL.minStoryWords}
-                    {fill($t('duel.too_short'), { n: DUEL.minStoryWords })}
-                {:else if wordCount > DUEL.maxStoryWords}
-                    {fill($t('duel.too_long'), { n: DUEL.maxStoryWords })}
-                {:else}
-                    {fill($t('duel.words'), { n: wordCount })}
-                {/if}
-            </p>
+            <div
+                class="box"
+                class:dragging
+                role="group"
+                aria-label={$t('duel.story_label')}
+                ondragover={dragOver}
+                ondragleave={() => (dragging = false)}
+                ondrop={drop}
+            >
+                <textarea
+                    bind:this={pieceBox}
+                    bind:value={story}
+                    oninput={() => (notice = '')}
+                    readonly={!live}
+                    maxlength={DUEL.maxStoryChars}
+                    rows="9"
+                    placeholder={$t('duel.placeholder')}
+                    disabled={busy !== ''}
+                ></textarea>
+                {#if dragging}<p class="drop-note">{$t('duel.drop_here')}</p>{/if}
+            </div>
+            <div class="tools">
+                <p class="count" class:off={!storyFits && wordCount > 0}>
+                    {#if wordCount < DUEL.minStoryWords}
+                        {fill($t('duel.too_short'), { n: DUEL.minStoryWords })}
+                    {:else if wordCount > DUEL.maxStoryWords}
+                        {fill($t('duel.too_long'), { n: DUEL.maxStoryWords })}
+                    {:else}
+                        {fill($t('duel.words'), { n: wordCount })}
+                    {/if}
+                </p>
+                <div class="tools-actions">
+                    {#if story}<span class="kept">{$t('duel.autosave_hint')}</span>{/if}
+                    {#if story}
+                        <button class="btn-secondary small" type="button" onclick={startOver} disabled={busy !== ''}>{$t('duel.clear_story')}</button>
+                    {/if}
+                    <button class="btn-secondary small" type="button" onclick={() => fileInput?.click()} disabled={busy !== ''}>
+                        {$t('duel.import')}
+                    </button>
+                </div>
+            </div>
+            <p class="note">{$t('duel.import_hint')}</p>
+            <input
+                bind:this={fileInput}
+                class="file"
+                type="file"
+                accept={IMPORT_TYPES}
+                onchange={fileChosen}
+                aria-hidden="true"
+                tabindex="-1"
+            />
         </section>
 
         {#if candidates.length}
@@ -598,6 +770,9 @@
         line-height: 1.5;
         text-align: center;
     }
+    .notice.news {
+        color: var(--text);
+    }
 
     /* ── The three steps ──────────────────────────────────────────── */
 
@@ -709,6 +884,55 @@
         color: var(--miss);
     }
 
+    /* ── The box, the tools beside the count, the picker ────────────── */
+
+    .box {
+        position: relative;
+    }
+    .box.dragging textarea {
+        border-color: var(--accent);
+        border-style: dashed;
+    }
+    .drop-note {
+        position: absolute;
+        inset: 0;
+        margin: 0;
+        display: grid;
+        place-items: center;
+        border-radius: 12px;
+        background: color-mix(in srgb, var(--bg) 86%, transparent);
+        color: var(--accent);
+        font-weight: 700;
+        pointer-events: none;
+    }
+    .tools {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.5rem 1rem;
+    }
+    .tools-actions {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 0.6rem;
+    }
+    .kept {
+        color: var(--text-muted);
+        font-size: 0.82rem;
+        font-weight: 500;
+    }
+    /* The picker itself stays out of sight; its button opens it. */
+    .file {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        opacity: 0;
+        overflow: hidden;
+        pointer-events: none;
+    }
+
     .row {
         display: flex;
         flex-wrap: wrap;
@@ -719,7 +943,8 @@
     .card.center .row {
         justify-content: center;
     }
-    .row .count {
+    .row .count,
+    .tools .count {
         margin-top: 0;
     }
     .btn-secondary.small {
