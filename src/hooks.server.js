@@ -2,6 +2,7 @@
 // Every request: the database, the member's language, and who is signed in.
 // The sign-in library's own endpoints under /api/auth are handed to it first.
 import { building } from '$app/env';
+import { redirect } from '@sveltejs/kit';
 import { env } from 'cloudflare:workers';
 import { svelteKitHandler } from 'better-auth/svelte-kit';
 import { createAuth } from '#lib/auth.js';
@@ -16,6 +17,21 @@ export async function handle({ event, resolve }) {
     if (!env.DB) throw new Error('The DB binding is missing: the Worker has no database.');
 
     event.locals.db = env.DB;
+
+    // A link may name the language to arrive in (patrouch.ca sends people on
+    // in the language they were reading). It becomes the remembered choice,
+    // and the address loses it: left there, a reload would keep overriding
+    // the chips.
+    const named = event.url.searchParams.get('lang');
+    if (named && LANGUAGES.includes(/** @type {'en' | 'es' | 'fr'} */ (named)) && !event.url.pathname.startsWith('/api/')) {
+        // Not HttpOnly: the chips on every page change this cookie from script,
+        // and a browser refuses to let script overwrite an HttpOnly one.
+        event.cookies.set('preferredLanguage', named, { path: '/', maxAge: 60 * 60 * 24 * 365, sameSite: 'lax', httpOnly: false });
+        const clean = new URL(event.url);
+        clean.searchParams.delete('lang');
+        redirect(302, `${clean.pathname}${clean.search}${clean.hash}`);
+    }
+
     // The cookie first, then what the browser asks for, then English.
     const cookie = event.cookies.get('preferredLanguage');
     const accepted = event.request.headers.get('accept-language')?.toLowerCase().match(/^[a-z]{2}/)?.[0];
