@@ -62,7 +62,7 @@ export const duelDay = getToday;
  * @param {T} fallback
  * @returns {T}
  */
-function parseJson(text, fallback) {
+export function parseJson(text, fallback) {
     try {
         const value = JSON.parse(/** @type {string} */ (text));
         return value ?? fallback;
@@ -185,8 +185,12 @@ export async function prepareDuel(db, ai, locale, day) {
 
 // ── Locking a duel ─────────────────────────────────────────────────────
 
-/** @param {unknown} story */
-function validateStory(story) {
+/**
+ * A piece as the server will take it: the rules of the Duel, and of the
+ * Siege with them. Throws a DuelError saying which rule it broke.
+ * @param {unknown} story
+ */
+export function validateStory(story) {
     if (typeof story !== 'string' || !story.trim()) {
         throw new DuelError(400, 'story_missing');
     }
@@ -322,15 +326,15 @@ export async function lockDuel(db, ai, { userId, locale, day, story, ropes }) {
 // ── The rewrite ────────────────────────────────────────────────────────
 
 /** How long a claim may stay held before another request may take it over. */
-const CLAIM_MINUTES = 5;
+export const CLAIM_MINUTES = 5;
 /** How long a request that lost the claim gives the holder before reporting. */
-const LOOK_MS = 1500;
+export const LOOK_MS = 1500;
 
 /** @param {Row} row */
 const isSettled = (row) => row.rewrite_status !== 'pending' && row.rewrite_status !== 'writing';
 
 /** @param {number} ms */
-const defaultPause = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+export const defaultPause = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 /** Give a claim back so the next pass can be asked for. @param {Db} db @param {string} id */
 function releaseClaim(db, id) {
@@ -340,6 +344,46 @@ function releaseClaim(db, id) {
         )
         .bind(id)
         .run();
+}
+
+/** Where a rewrite stands. @typedef {'pending' | 'clean' | 'escaped'} RewriteStatus */
+
+/**
+ * One more pass of Sappho's rewrite, and what is to be kept of it. Shared by
+ * the Duel and the Siege: each keeps its own claim on the pen and its own
+ * row to save to, and neither makes a model call except through here.
+ *
+ * The best pass so far is kept. A pass after which nothing has ever come
+ * back does not count. The next pass is told to avoid what got through this
+ * one. What slips through is reported, never cleaned up and hidden.
+ * @param {Engine} ai
+ * @param {{
+ *   locale: Lang,
+ *   policy: Policy,
+ *   draft: string,
+ *   forbidden: string[],
+ *   bannedKeys: string[],
+ *   slipped: string[],
+ *   soFar: { content: string, violations: string[], attempts: number }
+ * }} state
+ * @returns {Promise<{ content: string, violations: string[], slipped: string[] | null, attempts: number, status: RewriteStatus } | null>}
+ *   null when nothing has come back in any pass: a silent engine never uses up a pass
+ */
+export async function nextRewritePass(ai, { locale, policy, draft, forbidden, bannedKeys, slipped, soFar }) {
+    const attempt = await rewritePass(ai, locale, draft, forbidden, { policy, slipped, bannedKeys });
+    const best = betterAttempt(soFar, attempt) ?? attempt;
+    if (!best.content) return null;
+    const attempts = soFar.attempts + 1;
+    const clean = attempt.content !== '' && attempt.violations.length === 0;
+    const last = attempts >= DUEL.rewriteAttempts;
+    const status = clean || last ? (best.violations.length ? 'escaped' : 'clean') : 'pending';
+    return {
+        content: best.content,
+        violations: best.violations,
+        slipped: status === 'pending' ? (attempt.content ? attempt.violations : slipped) : null,
+        attempts,
+        status
+    };
 }
 
 /**
@@ -389,32 +433,28 @@ export async function rewriteDuel(db, ai, { userId, day, pause = defaultPause })
     const policy = /** @type {Policy} */ (parseJson(row.policy, { verbs: 'strict' }));
     const ropes = /** @type {Rope[]} */ (parseJson(row.ropes, []));
     const forbidden = [...new Set(ropes.flatMap((rope) => [...(rope.forms || []), ...(rope.draftForms || [])]))];
-    const attempt = await rewritePass(ai, locale, draft.content, forbidden, {
+    const next = await nextRewritePass(ai, {
+        locale,
         policy,
+        draft: draft.content,
+        forbidden,
+        bannedKeys: ropes.map((rope) => rope.key),
         slipped: /** @type {string[]} */ (parseJson(row.rewrite_slipped, [])),
-        bannedKeys: ropes.map((rope) => rope.key)
+        soFar: {
+            content: row.rewrite || '',
+            violations: /** @type {string[]} */ (parseJson(row.rewrite_violations, [])),
+            attempts: Number(row.rewrite_attempts) || 0
+        }
     });
 
-    const best =
-        betterAttempt(
-            { content: row.rewrite || '', violations: /** @type {string[]} */ (parseJson(row.rewrite_violations, [])) },
-            attempt
-        ) ?? attempt;
     // Nothing has come back yet, in any pass: the round stays as it was,
     // the claim goes back, and the player can ask again. A silent engine
     // never uses up a pass.
-    if (!best.content) {
+    if (!next) {
         await releaseClaim(db, row.id);
         throw new DuelError(503, 'rewrite_failed');
     }
-    const pass = (Number(row.rewrite_attempts) || 0) + 1;
-    // What the next pass is told to avoid: what got through this one.
-    const slipped = attempt.content ? attempt.violations : /** @type {string[]} */ (parseJson(row.rewrite_slipped, []));
-    const clean = attempt.content !== '' && attempt.violations.length === 0;
-    const last = pass >= DUEL.rewriteAttempts;
 
-    // What slipped through is reported, never cleaned up and hidden.
-    const status = clean || last ? (best.violations.length ? 'escaped' : 'clean') : 'pending';
     await db
         .prepare(
             `UPDATE oulipo_duel_rounds
@@ -422,7 +462,14 @@ export async function rewriteDuel(db, ai, { userId, day, pause = defaultPause })
                     rewrite_slipped = ?, updated_at = datetime('now')
               WHERE id = ? AND rewrite_status = 'writing'`
         )
-        .bind(best.content, status, pass, JSON.stringify(best.violations), status === 'pending' ? JSON.stringify(slipped) : null, row.id)
+        .bind(
+            next.content,
+            next.status,
+            next.attempts,
+            JSON.stringify(next.violations),
+            next.slipped ? JSON.stringify(next.slipped) : null,
+            row.id
+        )
         .run();
     return again();
 }

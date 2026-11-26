@@ -150,3 +150,79 @@ export interface BoardRow {
     misses: number;
     ropeCount: number;
 }
+
+// ── The Siege ──────────────────────────────────────────────────────────
+
+/** What a sent word was beside its hit or miss. A hit only one player sent is
+ *  original; a hit every player sent is unanimous; a word among the prompt's
+ *  own words earns no bonus either way. */
+export type WordTag = 'plain' | 'original' | 'unanimous' | 'prompt';
+
+export interface ScoredRope extends Rope {
+    tag: WordTag;
+}
+
+/** One player's standing in a resolved siege. */
+export interface SiegePlayer {
+    userId: string;
+    ropes: ScoredRope[];
+    hits: number;
+    misses: number;
+    original: number;
+    unanimous: number;
+    bonus: number;
+    score: number;
+    storyTypes: number;
+}
+
+/** A resolved siege: every player's words against the same hidden piece. */
+export interface SiegeScore {
+    players: SiegePlayer[];
+    /** Every distinct word anyone sent, and every form of them: what her rewrite has to avoid. */
+    union: { keys: string[]; forms: string[] };
+    /** The share of her piece that anyone's hits put off-limits. */
+    muzzlePct: number;
+}
+
+/** One player as the room's table lists them. */
+export interface SiegeRow {
+    userId: string;
+    name: string;
+    mine: boolean;
+    rank: number;
+    hits: number;
+    misses: number;
+    original: number;
+    unanimous: number;
+    bonus: number;
+    score: number;
+}
+
+/** What a player may see of a room. Before a round resolves nobody's words leave the server, and neither does the hidden piece. */
+export interface SiegeView {
+    code: string;
+    locale: Lang;
+    date: string;
+    status: 'writing' | 'resolved' | 'lapsed';
+    /** writing: in for today and not locked yet. locked: in, and locked. out:
+     *  sitting out today. late: the round is over and this player never locked. */
+    you: 'writing' | 'locked' | 'out' | 'late';
+    /** The day's prompt, once it has been written. */
+    prompt: string;
+    promptReady: boolean;
+    /** How many have locked, and how many more are counted in for today. */
+    locked: number;
+    present: number;
+    players: { userId: string; name: string; locked: boolean; mine: boolean }[];
+    /** Only once the round has resolved. */
+    result: {
+        players: number;
+        unionSize: number;
+        muzzlePct: number;
+        mine: SiegePlayer | null;
+        table: SiegeRow[];
+        draft: { text: string; spans: Span[] };
+        rewrite: RewriteView;
+    } | null;
+    earlier: { date: string; status: 'resolved' | 'lapsed'; score: number | null }[];
+}

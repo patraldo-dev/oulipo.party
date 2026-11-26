@@ -27,6 +27,7 @@ export class SqliteD1 {
         // The real migrations, exactly as they are applied.
         this.db.exec(sql('migrations/0002_duel.sql'));
         this.db.exec(sql('migrations/0003_daily_prompts.sql'));
+        this.db.exec(sql('migrations/0005_siege.sql'));
     }
 
     prepare(query) {
