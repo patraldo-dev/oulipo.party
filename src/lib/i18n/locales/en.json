@@ -54,7 +54,6 @@
   "error.invalid_username": "A username is 3 to 30 letters, digits or underscores.",
   "error.invalid_email": "That does not look like an email address.",
   "error.password_short": "The password needs at least 8 characters.",
-  "error.too_many": "Too many tries. Wait a moment, then try again.",
   "error.generic": "That did not work. Try again.",
   "duel.title": "The Duel",
   "duel.tagline": "Write a piece. Then send its words against the one Sappho has already written.",

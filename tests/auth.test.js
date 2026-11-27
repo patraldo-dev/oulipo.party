@@ -255,7 +255,10 @@ test('wrong passwords are cut off: the fourth within ten seconds is not even loo
         );
     }
     assert.deepEqual(statuses, [401, 401, 401, 429, 429]);
-    assert.equal(messageFor({ status: 429 }), 'error.too_many', 'which the sign-in page tells the member');
+    // The refusal reads like any other failure: what the site is doing to
+    // throttle a guesser is not something it tells the guesser.
+    assert.equal(messageFor({ status: 429 }), 'error.generic', 'which the sign-in page tells the member');
+    assert.notEqual(messageFor({ code: 'INVALID_EMAIL_OR_PASSWORD' }), 'error.generic', 'a wrong password keeps its own words');
 });
 
 test('the count is kept per address, so one guesser does not lock a neighbour out', async () => {

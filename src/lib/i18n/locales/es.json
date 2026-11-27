@@ -54,7 +54,6 @@
   "error.invalid_username": "Un nombre de usuario lleva de 3 a 30 letras, números o guiones bajos.",
   "error.invalid_email": "Eso no parece un correo.",
   "error.password_short": "La contraseña necesita al menos 8 caracteres.",
-  "error.too_many": "Demasiados intentos. Espera un momento y vuelve a probar.",
   "error.generic": "No funcionó. Inténtalo de nuevo.",
   "duel.title": "El duelo",
   "duel.tagline": "Escribe un texto. Luego envía sus palabras contra el que Sappho ya escribió.",

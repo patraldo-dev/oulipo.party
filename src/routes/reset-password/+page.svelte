@@ -28,10 +28,8 @@
             body: JSON.stringify({ email: email.trim().toLowerCase() })
         }).catch(() => null);
         busy = false;
-        if (answer?.status === 429) {
-            error = 'error.too_many';
-            return;
-        }
+        // A refusal is answered like any other failure, in the same words —
+        // however the site is throttling, it says so to nobody.
         const left = answer?.ok && (await answer.json().catch(() => null))?.sent === true;
         if (left) sent = true;
         else error = 'reset.failed';

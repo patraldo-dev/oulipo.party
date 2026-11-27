@@ -26,11 +26,12 @@ const MESSAGES = {
 };
 
 /**
- * The text key for a refusal from the sign-in library.
+ * The text key for a refusal from the sign-in library. Every refusal reads
+ * the same, whatever its reason — throttling included: how hard the site
+ * pushes back is not something it explains to whoever is pushing.
  * @param {{ code?: string, status?: number } | null | undefined} error
  */
 export function messageFor(error) {
-    if (error?.status === 429) return 'error.too_many';
     return (error?.code && MESSAGES[error.code]) || 'error.generic';
 }
 
