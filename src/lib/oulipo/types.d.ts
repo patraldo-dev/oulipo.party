@@ -204,9 +204,10 @@ export interface SiegeView {
     locale: Lang;
     date: string;
     status: 'writing' | 'resolved' | 'lapsed';
-    /** writing: in for today and not locked yet. locked: in, and locked. out:
-     *  sitting out today. late: the round is over and this player never locked. */
-    you: 'writing' | 'locked' | 'out' | 'late';
+    /** none: not counted in yet; the page's first ask does that. writing: in for
+     *  today and not locked yet. locked: in, and locked. out: sitting out today.
+     *  late: the round is over and this player never locked. */
+    you: 'none' | 'writing' | 'locked' | 'out' | 'late';
     /** The day's prompt, once it has been written. */
     prompt: string;
     promptReady: boolean;
