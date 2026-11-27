@@ -3,7 +3,7 @@
 import { json } from '@sveltejs/kit';
 import { env } from 'cloudflare:workers';
 import { duelDay, rewriteDuel } from '#lib/server/oulipo-duel.js';
-import { fail } from '../_respond.js';
+import { fail } from '../../_respond.js';
 
 /** @type {import('./$types').RequestHandler} */
 export async function POST({ locals }) {
@@ -12,6 +12,6 @@ export async function POST({ locals }) {
         const view = await rewriteDuel(locals.db, env.AI, { userId: locals.user.id, day: duelDay() });
         return json(view);
     } catch (error) {
-        return fail(error, 'rewrite');
+        return fail(error, 'duel rewrite');
     }
 }

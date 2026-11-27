@@ -29,6 +29,23 @@ pnpm build
 The tests need no account and no network: they run against in-memory SQLite
 and a scripted stand-in for the model.
 
+## How a siege goes
+
+1. One member starts a room and gets a five-character code; up to eight share
+   it. The code keeps working every day: each day the room has a new round, on
+   the day's prompt, with a hidden piece of Sappho's that is the room's own.
+2. Whoever opens the room that day is counted in until they lock, sit out, or
+   the day ends. Each writes a piece and locks words exactly as in the Duel.
+3. The round resolves the moment the last of them locks — or when the day is
+   over, with those who did. Fewer than two locked, and it lapses.
+4. Everyone's words are judged against the same piece. A hit is +1 and a miss
+   −1. A hit only one player found earns +1 more; a hit every player found
+   earns +1 per player; a word among the prompt's own words earns neither.
+   The numbers are in `src/lib/oulipo/siege-rules.js`.
+5. She then rewrites her piece without a word any of them sent.
+
+The result of an earlier day is at `/siege/CODE/DATE`.
+
 ## Where things are
 
 - `src/lib/oulipo/` — the word engine. Pure, isomorphic, one configuration per
@@ -43,6 +60,10 @@ and a scripted stand-in for the model.
   (`src/lib/server/email-sender.js`).
 - `src/routes/+page.svelte` — the landing page: today's games.
 - `src/routes/duel/+page.svelte` — the solitaire duel.
+- `src/routes/siege/` — the Siege: its door, a room (`[code]`), and an earlier
+  day of a room (`[code]/[date]`).
+- `src/lib/oulipo/siege-rules.js`, `src/lib/server/siege.js` — the Siege's
+  rules and its flow, taking `db` and `ai` as the Duel's do.
 - `src/lib/components/` — the pieces a game page is built from: the writing
   space, the word picker, her rewrite. Their look is in `src/app.css`, under
   `.game-page`.

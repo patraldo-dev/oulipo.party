@@ -4,7 +4,7 @@
 import { json } from '@sveltejs/kit';
 import { env } from 'cloudflare:workers';
 import { duelDay, lockDuel } from '#lib/server/oulipo-duel.js';
-import { fail, readJson } from '../_respond.js';
+import { fail, readJson } from '../../_respond.js';
 
 /** @type {import('./$types').RequestHandler} */
 export async function POST({ locals, request }) {
@@ -21,6 +21,6 @@ export async function POST({ locals, request }) {
         });
         return json(view);
     } catch (error) {
-        return fail(error, 'lock');
+        return fail(error, 'duel lock');
     }
 }

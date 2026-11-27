@@ -828,6 +828,10 @@ html[data-theme='dark'] .game-page {
   background: #2b59ff;
   color: #ffffff;
 }
+.game-page .tile.bonus {
+  background: #7c5cd6;
+  color: #ffffff;
+}
 .game-page .tile dt {
   font-size: 0.7rem;
   font-weight: 700;
@@ -967,6 +971,20 @@ html[data-theme='dark'] .game-page {
   background: #e9a570;
   color: #121212;
 }
+/* In a siege players who tie share a place, so the colour follows the place
+   and not the row. */
+.game-page .board li[data-rank='1'] .rank {
+  background: #f7c948;
+  color: #121212;
+}
+.game-page .board li[data-rank='2'] .rank {
+  background: #d4d4d4;
+  color: #121212;
+}
+.game-page .board li[data-rank='3'] .rank {
+  background: #e9a570;
+  color: #121212;
+}
 .game-page .name {
   overflow-wrap: anywhere;
 }
@@ -996,6 +1014,9 @@ html[data-theme='dark'] .game-page {
 }
 .game-page .mark.miss {
   background: #d13d3d;
+}
+.game-page .mark.bonus {
+  background: #7c5cd6;
 }
 .game-page .pts {
   font-family: var(--font-display);

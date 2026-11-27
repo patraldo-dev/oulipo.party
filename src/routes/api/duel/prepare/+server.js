@@ -4,7 +4,7 @@
 import { json } from '@sveltejs/kit';
 import { env } from 'cloudflare:workers';
 import { duelDay, prepareDuel } from '#lib/server/oulipo-duel.js';
-import { fail } from '../_respond.js';
+import { fail } from '../../_respond.js';
 
 /** @type {import('./$types').RequestHandler} */
 export async function POST({ locals }) {
@@ -12,6 +12,6 @@ export async function POST({ locals }) {
     try {
         return json(await prepareDuel(locals.db, env.AI, locals.locale, duelDay()));
     } catch (error) {
-        return fail(error, 'prepare');
+        return fail(error, 'duel prepare');
     }
 }

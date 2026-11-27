@@ -13,6 +13,7 @@
     import WritingSpace from '#lib/components/WritingSpace.svelte';
     import { DUEL } from '#lib/oulipo/duel-rules.js';
     import { pieceView, savedPiece } from '#lib/piece.js';
+    import { post } from '#lib/api.js';
 
     /** @typedef {import('#lib/oulipo/types.js').RoundView} RoundView */
     /** @typedef {'unavailable' | 'signin' | 'preparing' | 'write' | 'locked'} Stage */
@@ -98,33 +99,8 @@
 
     const rewriteStatus = $derived(round?.rewrite.status ?? 'pending');
 
-    /**
-     * Call one of the duel's endpoints: a POST when a body is given, a GET
-     * otherwise. A request that cannot be made or answered at all comes
-     * back as a failure, never as a thrown error.
-     * @param {string} path
-     * @param {unknown} [body]
-     * @returns {Promise<{ ok: boolean, payload: any }>}
-     */
-    async function call(path, body) {
-        const hasBody = body !== undefined;
-        try {
-            const response = await fetch(`/api/duel/${path}`, {
-                method: hasBody ? 'POST' : 'GET',
-                headers: hasBody ? { 'Content-Type': 'application/json' } : undefined,
-                body: hasBody ? JSON.stringify(body) : undefined
-            });
-            let payload = null;
-            try {
-                payload = await response.json();
-            } catch {
-                payload = null;
-            }
-            return { ok: response.ok, payload };
-        } catch {
-            return { ok: false, payload: null };
-        }
-    }
+    /** Call one of the duel's endpoints. @param {string} path @param {unknown} [body] */
+    const call = (path, body) => post(`/api/duel/${path}`, body);
 
     async function prepare() {
         busy = 'prepare';

@@ -1,6 +1,7 @@
 // / — the day's games. The landing page offers the Duel and the Siege, and
 // says what the member has already done of each today.
 import { duelDay, readRound } from '#lib/server/oulipo-duel.js';
+import { siegeStatus } from '#lib/server/siege.js';
 
 /** @type {import('./$types').PageServerLoad} */
 export async function load({ locals }) {
@@ -13,7 +14,8 @@ export async function load({ locals }) {
     if (!locals.user) return nothing;
     try {
         const round = await readRound(locals.db, locals.user.id, duelDay());
-        return { ...base, duel: round ? { score: Number(round.score) } : null, siege: null };
+        const siege = await siegeStatus(locals.db, locals.user.id, duelDay());
+        return { ...base, duel: round ? { score: Number(round.score) } : null, siege };
     } catch (error) {
         // Each game's own page says more when something is wrong; the landing
         // page goes on offering them.

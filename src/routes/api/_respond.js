@@ -1,4 +1,4 @@
-// Shared answers for the duel's endpoints (api/duel/*).
+// Shared answers for the games' endpoints (api/duel/* and api/siege/*).
 import { json } from '@sveltejs/kit';
 import { DuelError } from '#lib/server/oulipo-duel.js';
 
@@ -21,6 +21,6 @@ export function fail(error, where) {
     if (error instanceof DuelError) {
         return json({ error: error.code, detail: error.detail }, { status: error.status });
     }
-    console.error(`[duel] ${where} failed:`, error instanceof Error ? error.message : error);
+    console.error(`[${where}] failed:`, error instanceof Error ? error.message : error);
     return json({ error: 'server_error' }, { status: 500 });
 }

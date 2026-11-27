@@ -18,6 +18,11 @@ declare global {
 			} | null;
 			session: Session | null;
 		}
+		/** What a page hands the next one through the browser's history. */
+		interface PageState {
+			/** Set by a room when the member has just left it, so the door can say so. */
+			left?: boolean;
+		}
 	}
 }
 

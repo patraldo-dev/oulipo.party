@@ -414,7 +414,7 @@ async function viewOf(db, room, userId, day, known) {
         locale: /** @type {Lang} */ (room.locale),
         date: day,
         status: round?.status ?? 'writing',
-        you: mine?.locked_at ? 'locked' : over ? 'late' : mine?.present ? 'writing' : 'out',
+        you: !mine ? (over ? 'late' : 'none') : mine.locked_at ? 'locked' : over ? 'late' : mine.present ? 'writing' : 'out',
         prompt: prompt?.prompt_text ?? '',
         promptReady: Boolean(prompt),
         locked: locked.length,
