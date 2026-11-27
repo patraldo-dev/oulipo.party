@@ -2,8 +2,8 @@
 
 A daily game for writers, in English, Spanish and French. Sappho, the
 storyteller, has written a hidden piece for today's prompt. Write one of your
-own, send some of its words against hers, and score the ones her draft used.
-Then she rewrites her piece without a single word you sent.
+own, send a wager of its words against hers — the fewer you send, the more
+each hit pays. Then she rewrites her piece without a single word you sent.
 
 The game was born in the writing community at [patrouch.ca](https://patrouch.ca)
 and became its own site here.
@@ -12,9 +12,14 @@ and became its own site here.
 
 1. Sappho drafts one hidden piece per language per day, against the day's prompt.
 2. You write a piece of your own (30 to 300 words; a longer piece counts up to 300) and send some of its words.
-3. A word she used is a hit (+1); a word she did not is a miss (−1). Small words
-   never count, in any of the three languages.
-4. One duel a day. After you lock it, she rewrites her piece without your words.
+3. Only your own words can be sent — the ones the prompt gave her sit greyed
+   out. Hits only: a miss costs nothing but its slot, so the score never falls
+   below zero. Small words never count, in any of the three languages.
+4. The wager is the count. Four words sent pay ×5 a hit; eight pay ×2.5;
+   fourteen pay ×1.5; twenty pay ×1. The numbers are in
+   `src/lib/oulipo/duel-rules.js`, retuned on the ledger (`duel_ledger`) as
+   real play accumulates.
+5. One duel a day. After you lock it, she rewrites her piece without your words.
 
 ## Run it
 

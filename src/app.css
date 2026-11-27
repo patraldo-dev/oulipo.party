@@ -777,6 +777,16 @@ html[data-theme='dark'] .game-page {
   border-color: var(--accent);
   color: var(--accent);
 }
+/* Her words — the ones the prompt gave her — sit greyed and untouchable. */
+.game-page .chip.free {
+  border-style: dashed;
+  opacity: 0.55;
+  text-decoration: line-through;
+  text-decoration-thickness: 1.5px;
+}
+.game-page .wager {
+  font-weight: 600;
+}
 .game-page .chip.static {
   cursor: default;
 }

@@ -59,7 +59,7 @@
   "duel.title": "Le duel",
   "duel.tagline": "Écris un texte. Puis envoie ses mots contre celui que Sappho a déjà écrit.",
   "duel.rule_1": "Sappho a déjà écrit son texte pour le stimulus du jour. Personne ne peut encore le lire.",
-  "duel.rule_2": "Écris le tien, puis envoie une partie de ses mots contre le sien. Un mot qu'elle a employé est une touche (+1). Un mot qu'elle n'a pas employé est un raté (−1).",
+  "duel.rule_2": "Écris ta propre pièce, puis envoie quelques-uns de ses mots contre les siens. Seuls tes propres mots comptent : les siens sont grisés. Moins tu envoies de mots, plus chaque trouvaille paie.",
   "duel.rule_3": "Puis elle réécrit son texte sans un seul des mots que tu as envoyés.",
   "duel.note": "Les petits mots — le, et, être — ne comptent jamais. Seuls les mots de quatre lettres et plus.",
   "duel.prompt_label": "Le stimulus du jour",
@@ -76,7 +76,7 @@
   "duel.pick_one": "Choisis au moins un mot à envoyer : bouge le curseur ou touche un mot.",
   "duel.too_long": "Un duel accepte {n} mots au maximum. Recharge la page et renvoie : seuls les {n} premiers compteront.",
   "duel.choose_title": "Envoie tes mots",
-  "duel.choose_body": "Choisis des mots de ton propre texte à lui interdire. Le curseur choisit les premiers ; touche un mot pour l’ajouter ou le retirer. Rien ne part avant que tu verrouilles.",
+  "duel.choose_body": "Choisis des mots de ta propre pièce pour les lui interdire ; ceux du prompt sont grisés. Le curseur, c’est ton pari : descends-le pour envoyer moins de mots et que chaque trouvaille paie plus. Touche un mot pour l’ajouter ou le retirer. Rien n’est envoyé avant que tu confirmes.",
   "duel.ropes_count": "{n} mots choisis sur {total}",
   "duel.send_all": "Tout choisir",
   "duel.clear": "Ne rien choisir",
@@ -209,5 +209,13 @@
   "siege.lapsed": "Le siège du jour n’a pas eu lieu : moins de deux joueurs ont verrouillé.",
   "siege.late": "Le siège du jour est déjà fini. Tu peux lire comment ça s’est passé.",
   "siege.earlier_title": "Sièges précédents",
-  "siege.did_not_lock": "tu n’as pas verrouillé"
+  "siege.did_not_lock": "tu n’as pas verrouillé",
+  "duel.meter_hint": "Huit mots ou moins, et chaque trouvaille paie bien plus.",
+  "duel.prompt_free": "Les mots gris sont déjà à elle : le prompt les lui a donnés.",
+  "duel.contract.0": "le coup de lune",
+  "duel.contract.1": "le pari hardi",
+  "duel.contract.2": "la main sûre",
+  "duel.contract.3": "le cordon entier",
+  "duel.sent_contract": "Tu as envoyé {n} mots — {name} : {hits} × {pays} = {score}.",
+  "duel.too_many": "Envoie au plus {n} mots."
 }

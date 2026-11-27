@@ -59,7 +59,7 @@
   "duel.title": "El duelo",
   "duel.tagline": "Escribe un texto. Luego envía sus palabras contra el que Sappho ya escribió.",
   "duel.rule_1": "Sappho ya escribió su texto para el estímulo de hoy. Nadie puede leerlo todavía.",
-  "duel.rule_2": "Escribe el tuyo y envía parte de sus palabras contra el suyo. Una palabra que ella usó es un acierto (+1). Una que no usó es un fallo (−1).",
+  "duel.rule_2": "Escribe tu propia pieza y envía algunas de sus palabras contra la suya. Solo tus propias palabras cuentan: las suyas van en gris. Cuantas menos palabras envíes, más paga cada acierto.",
   "duel.rule_3": "Después ella reescribe su texto sin una sola palabra de las que enviaste.",
   "duel.note": "Las palabras gramaticales — el, y, ser — nunca cuentan. Solo las palabras de cuatro letras o más.",
   "duel.prompt_label": "El estímulo de hoy",
@@ -76,7 +76,7 @@
   "duel.pick_one": "Elige al menos una palabra para enviar: mueve el control o toca una palabra.",
   "duel.too_long": "Un duelo admite {n} palabras como máximo. Recarga la página y envía de nuevo: contarán las primeras {n}.",
   "duel.choose_title": "Envía tus palabras",
-  "duel.choose_body": "Elige palabras de tu propio texto para prohibírselas. El control elige las primeras; toca una palabra para añadir la o quitarla. No se envía nada hasta que bloquees.",
+  "duel.choose_body": "Elige palabras de tu propia pieza para vedárselas; las del prompt van en gris. El slider es tu apuesta: bájalo para enviar menos palabras y que cada acierto pague más. Toca una palabra para añadirla o quitarla. Nada se envía hasta que confirmas.",
   "duel.ropes_count": "{n} de {total} palabras elegidas",
   "duel.send_all": "Elegir todas",
   "duel.clear": "No elegir ninguna",
@@ -209,5 +209,13 @@
   "siege.lapsed": "El asedio de hoy no se jugó: bloquearon menos de dos personas.",
   "siege.late": "El asedio de hoy ya terminó. Puedes ver cómo fue.",
   "siege.earlier_title": "Asedios anteriores",
-  "siege.did_not_lock": "no bloqueaste"
+  "siege.did_not_lock": "no bloqueaste",
+  "duel.meter_hint": "Con ocho palabras o menos, cada acierto paga mucho más.",
+  "duel.prompt_free": "Las palabras grises ya son suyas: el prompt se las dio.",
+  "duel.contract.0": "el tiro a la luna",
+  "duel.contract.1": "la apuesta osada",
+  "duel.contract.2": "la mano firme",
+  "duel.contract.3": "el cordón entero",
+  "duel.sent_contract": "Enviaste {n} palabras — {name}: {hits} × {pays} = {score}.",
+  "duel.too_many": "Envía {n} palabras como mucho."
 }

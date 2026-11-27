@@ -6,7 +6,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 
 import { analyze } from '../src/lib/oulipo/engine.js';
-import { DUEL } from '../src/lib/oulipo/duel-rules.js';
+import { DUEL, contractName, contractPays } from '../src/lib/oulipo/duel-rules.js';
 import {
     DuelError,
     duelDay,
@@ -41,7 +41,8 @@ const lock = (db, overrides = {}) =>
         locale: 'es',
         day: DAY,
         story: SCENES.es.story,
-        ropes: keysOf(SCENES.es.story, 'es'),
+        // The story has 30 sendable keys; the wager takes at most the cap.
+        ropes: keysOf(SCENES.es.story, 'es').slice(0, DUEL.sendCap),
         ...overrides
     });
 
@@ -147,7 +148,10 @@ test('lock and rewrite run the same way in fr, en and es', async () => {
         );
         assert.equal(view.hits, 3, lang);
         assert.equal(view.misses, 1, lang);
-        assert.equal(view.score, 2, lang);
+        // The wager: four words sent is the moon shot, so three hits pay 3 × 5.
+        assert.equal(view.score, 15, lang);
+        assert.equal(view.pays, 5, lang);
+        assert.equal(view.contractName, 0, lang);
         assert.equal(view.ropeCount, 4, lang);
         assert.equal(view.draft.text, scene.draft, lang);
         assert.ok(view.draft.spans.length >= 3 && view.draft.spans.length <= 6, `${lang}: ${view.draft.spans.length}`);
@@ -226,6 +230,57 @@ test('lock re-checks every rope against the story on the server', async () => {
     await rejectsCode(lock(db, { ropes: ['padre', 7, null, ''] }), 400, 'rope_not_in_story');
     await rejectsCode(lock(db, { ropes: ["padre' OR 1=1 --"] }), 400, 'rope_not_in_story');
     assert.equal(db.rows('SELECT COUNT(*) AS n FROM oulipo_duel_rounds')[0].n, 0);
+});
+
+test('the wager pays by the count: fewer words, the more each hit pays', () => {
+    // The tiers, at their edges: 4 → ×5, 5 → ×2.5, 8 → ×2.5, 9 → ×1.5,
+    // 14 → ×1.5, 15 → ×1, 20 → ×1. Above the cap, the last tier's rate.
+    assert.deepEqual(
+        [1, 4, 5, 8, 9, 14, 15, 20, 99].map((n) => contractPays(n)),
+        [5, 5, 2.5, 2.5, 1.5, 1.5, 1, 1, 1]
+    );
+    assert.deepEqual([4, 5, 8, 9, 14, 15, 20, 99].map((n) => contractName(n)), [0, 1, 1, 2, 2, 3, 3, 3]);
+});
+
+test('a word of the prompt is hers already: it cannot be sent', async () => {
+    const db = await setup();
+    // 'The prompt of the day' is the fixture's prompt; a piece that uses the
+    // word "prompt" cannot send it, however it was picked.
+    const story = `I keep a prompt above my desk and answer it every morning. ` +
+        `The page fills slowly, one line after another, until the whole thing stands there, breathing. ` +
+        `Some mornings the words arrive together; other mornings nothing comes at all, and I wait.`;
+    const answer = keysOf(story, 'es').includes('prompt');
+    assert.equal(answer, true, 'the fixture story must contain the prompt word for this test to mean anything');
+    await rejectsCode(lock(db, { story, ropes: ['prompt'] }), 400, 'prompt_word');
+    assert.equal(db.rows('SELECT COUNT(*) AS n FROM oulipo_duel_rounds')[0].n, 0);
+});
+
+test('more words than the cap is not a wager, it is a shotgun: refused', async () => {
+    const db = await setup();
+    const keys = keysOf(SCENES.es.story, 'es');
+    assert.ok(keys.length > DUEL.sendCap, 'the fixture has more keys than the cap, for this test to mean anything');
+    await rejectsCode(lock(db, { ropes: keys }), 400, 'too_many_words');
+    assert.equal(db.rows('SELECT COUNT(*) AS n FROM oulipo_duel_rounds')[0].n, 0);
+});
+
+test('misses cost nothing but their slot, and the ledger remembers every word', async () => {
+    const db = await setup();
+    // 'gaviota' is not in her draft: one miss, sent alone, scores zero — the
+    // old scoring would have charged −1. Three words is the moon shot (×5).
+    const view = await lock(db, { ropes: ['guardiana', 'gaviota', 'padre'] });
+    assert.equal(view.hits, 2);
+    assert.equal(view.misses, 1);
+    assert.equal(view.score, 10, 'two hits at the moon shot’s ×5');
+    assert.equal(view.contractName, 0);
+    const ledger = db
+        .rows('SELECT word_key, band, hit, contract, pays FROM duel_ledger ORDER BY word_key')
+        .map((row) => ({ ...row }));
+    assert.deepEqual(ledger, [
+        { word_key: 'gaviota', band: 'other', hit: 0, contract: 3, pays: 5 },
+        { word_key: 'guardiana', band: 'other', hit: 1, contract: 3, pays: 5 },
+        { word_key: 'padre', band: 'other', hit: 1, contract: 3, pays: 5 }
+    ]);
+    assert.equal(db.rows('SELECT COUNT(*) AS n FROM duel_ledger')[0].n, 3);
 });
 
 test('lock is once per player per day, in any language', async () => {
@@ -553,7 +608,8 @@ test('the board ranks by score, shows the name each member chose, and honours th
     await addUser(db, 'pia', { username: 'pia', name: 'Pluma' });
     await addUser(db, 'shy', { username: 'shy', onBoard: 0 });
     await addDraft(db, DAY, 'es', SCENES.es.draft);
-    // pia: 3 hits, 1 miss (+2). ana and shy: one hit each (+1). rio: one miss (−1).
+    // pia: 3 hits, 1 miss over a four-word contract (×5) → 15. ana and shy:
+    // one hit each on a one-word contract (×5) → 5. rio: one miss → 0.
     const play = (id, ropes) =>
         lockDuel(db, fakeAi(), { userId: id, locale: 'es', day: DAY, story: SCENES.es.story, ropes });
     await play('pia', SCENES.es.ropes);
@@ -565,7 +621,7 @@ test('the board ranks by score, shows the name each member chose, and honours th
     // shy asked not to appear on scoreboards, so shy does not, round or no round.
     assert.deepEqual(
         board.map((row) => [row.name, row.score, row.mine]),
-        [['Pluma', 2, true], ['ana', 1, false], ['rio', -1, false]]
+        [['Pluma', 15, true], ['ana', 5, false], ['rio', 0, false]]
     );
     assert.deepEqual((await getBoard(db, 'es', DAY)).map((row) => row.mine), [false, false, false]);
     assert.ok(!JSON.stringify(board).includes('shy'), 'an opt-out is an opt-out');
@@ -573,7 +629,7 @@ test('the board ranks by score, shows the name each member chose, and honours th
         id: board[0].id,
         mine: true,
         name: 'Pluma',
-        score: 2,
+        score: 15,
         muzzlePct: board[0].muzzlePct,
         hits: 3,
         misses: 1,
@@ -586,9 +642,9 @@ test('the board ranks by score, shows the name each member chose, and honours th
     // A member who changes their mind appears again.
     await db.prepare('UPDATE "user" SET show_in_scoreboard = 1 WHERE id = ?').bind('shy').run();
     const after = (await getBoard(db, 'es', DAY)).map((row) => `${row.name}:${row.score}`);
-    assert.deepEqual(after.slice(0, 1), ['Pluma:2']);
-    assert.deepEqual(after.slice(1, 3).sort(), ['ana:1', 'shy:1']);
-    assert.deepEqual(after.slice(3), ['rio:-1']);
+    assert.deepEqual(after.slice(0, 1), ['Pluma:15']);
+    assert.deepEqual(after.slice(1, 3).sort(), ['ana:5', 'shy:5']);
+    assert.deepEqual(after.slice(3), ['rio:0']);
 });
 
 test('a board that cannot be read is empty rather than indiscreet', async () => {

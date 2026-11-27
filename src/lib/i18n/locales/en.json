@@ -59,7 +59,7 @@
   "duel.title": "The Duel",
   "duel.tagline": "Write a piece. Then send its words against the one Sappho has already written.",
   "duel.rule_1": "Sappho has written her piece for today's prompt. Nobody can read it yet.",
-  "duel.rule_2": "Write your own piece, then send some of its words against hers. A word she used is a hit (+1). A word she did not use is a miss (−1).",
+  "duel.rule_2": "Write your own piece, then send some of its words against hers. Only your own words count — hers are greyed out. The fewer words you send, the more each hit pays.",
   "duel.rule_3": "Then she rewrites her piece without a single word you sent.",
   "duel.note": "Small words — the, and, to be — never count. Only words of four letters or more.",
   "duel.prompt_label": "Today's prompt",
@@ -76,7 +76,7 @@
   "duel.pick_one": "Pick at least one word to send: move the slider or tap a word.",
   "duel.too_long": "A duel takes {n} words at most. Reload the page and send again: the first {n} will count.",
   "duel.choose_title": "Send your words",
-  "duel.choose_body": "Pick words from your own piece to forbid her. The slider picks the first ones; tap a word to add it or take it back. Nothing is sent until you lock in.",
+  "duel.choose_body": "Pick words from your own piece to forbid her; the prompt’s words are greyed out. The slider is your wager: slide it down to send fewer words for a bigger pay. Tap a word to add it or take it back. Nothing is sent until you lock in.",
   "duel.ropes_count": "{n} of {total} words picked",
   "duel.send_all": "Pick all",
   "duel.clear": "Pick none",
@@ -209,5 +209,13 @@
   "siege.lapsed": "Today's siege did not happen: fewer than two players locked in.",
   "siege.late": "Today's siege is already over. You can read how it went.",
   "siege.earlier_title": "Earlier sieges",
-  "siege.did_not_lock": "you did not lock in"
+  "siege.did_not_lock": "you did not lock in",
+  "duel.meter_hint": "Send eight or fewer and every hit pays far more.",
+  "duel.prompt_free": "Grey words are hers already — the prompt gave them to her.",
+  "duel.contract.0": "the moon shot",
+  "duel.contract.1": "the bold wager",
+  "duel.contract.2": "the steady hand",
+  "duel.contract.3": "the full cord",
+  "duel.sent_contract": "You sent {n} words — {name}: {hits} × {pays} = {score}.",
+  "duel.too_many": "Send {n} words at most."
 }

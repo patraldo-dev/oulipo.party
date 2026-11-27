@@ -56,6 +56,17 @@ export function pieceView(story, lang) {
 }
 
 /**
+ * The words of the day's prompt, as keys — the same folding the game gives
+ * every word, so the picker can grey out the ones she already had for free.
+ * @param {string} prompt
+ * @param {Lang} lang
+ * @returns {ReadonlySet<string>}
+ */
+export function promptKeySet(prompt, lang) {
+    return new Set(analyze(prompt ?? '', lang, defaultPolicy(lang)).types.map((type) => type.key));
+}
+
+/**
  * The piece kept in this browser on a former visit, or nothing. The server
  * has none to read, so a page rendered there starts from an empty box.
  * @param {string} key

@@ -134,6 +134,10 @@ export interface RoundView {
     hits: number;
     misses: number;
     score: number;
+    /** What one hit paid under the wager sent: set by the count of words. */
+    pays: number;
+    /** Which named wager the count was, as the index into `duel.contract.0…3`. */
+    contractName: number;
     muzzlePct: number;
     tier: number;
     draft: { text: string; tokens: number; spans: Span[] };

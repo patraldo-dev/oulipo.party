@@ -30,7 +30,7 @@ import {
     normalizeText,
     tierFor
 } from '#lib/oulipo/engine.js';
-import { DUEL } from '#lib/oulipo/duel-rules.js';
+import { DUEL, contractName, contractPays } from '#lib/oulipo/duel-rules.js';
 import { ensurePrompt, PromptError } from './daily-prompt.js';
 import { betterAttempt, generateDraft, rewritePass } from './oulipo-sappho.js';
 import { SAPPHO_MODEL } from './sappho-persona.js';
@@ -230,6 +230,8 @@ export function roundView(row, draft) {
         hits: row.hits,
         misses: row.misses,
         score: row.score,
+        pays: contractPays(row.rope_count),
+        contractName: contractName(row.rope_count),
         muzzlePct: row.muzzle_pct,
         tier: tierFor(locale, row.rope_count, row.story_types),
         draft: {
@@ -265,6 +267,9 @@ export async function lockDuel(db, ai, { userId, locale, day, story, ropes }) {
     const storyAnalysis = analyze(story, locale, policy);
     const available = new Set(storyAnalysis.types.map((type) => type.key));
     const wanted = [...new Set(ropes)];
+    if (wanted.length > DUEL.sendCap) {
+        throw new DuelError(400, 'too_many_words', `${wanted.length} words`);
+    }
     const invalid = wanted.filter((key) => typeof key !== 'string' || !available.has(key));
     if (invalid.length) {
         throw new DuelError(400, 'rope_not_in_story', invalid.slice(0, 10).join(', '));
@@ -282,7 +287,21 @@ export async function lockDuel(db, ai, { userId, locale, day, story, ropes }) {
         throw new DuelError(503, 'draft_failed', reason(error));
     }
 
+    // The prompt's words are hers already: the picker greys them out, and the
+    // server refuses them however the ask was made. The same folding decides,
+    // so the browser and this check can never disagree.
+    const hers = new Set(analyze(draft.prompt_text, locale, policy).types.map((type) => type.key));
+    const claimed = wanted.filter((key) => hers.has(key));
+    if (claimed.length) {
+        throw new DuelError(400, 'prompt_word', claimed.slice(0, 10).join(', '));
+    }
+
     const verdict = judge(story, draft.content, locale, policy, wanted);
+    // The wager is the count: hits only, and how much a hit pays is set by
+    // how many words were sent. A miss costs nothing but its slot, so the
+    // score can only climb from zero.
+    const pays = contractPays(wanted.length);
+    const score = verdict.hits * pays;
     /** @type {Row} */
     const row = {
         id: crypto.randomUUID(),
@@ -297,7 +316,7 @@ export async function lockDuel(db, ai, { userId, locale, day, story, ropes }) {
         story_types: verdict.storyTypes,
         hits: verdict.hits,
         misses: verdict.misses,
-        score: verdict.score,
+        score,
         muzzle_pct: verdict.muzzlePct,
         draft_tokens: verdict.draftTokens
     };
@@ -318,6 +337,24 @@ export async function lockDuel(db, ai, { userId, locale, day, story, ropes }) {
     } catch (error) {
         if (await readRound(db, userId, day)) throw new DuelError(409, 'already_locked');
         throw error;
+    }
+    // The ledger: one row per sent word — the day, the band it fell in, its
+    // outcome, and the contract it was sent under. This is what retunes the
+    // wager's numbers once real play exists.
+    for (const rope of verdict.ropes) {
+        await db
+            .prepare(
+                `INSERT INTO duel_ledger
+                   (id, round_id, user_id, locale, duel_date, word_key, word_form, band, hit, contract, pays)
+                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+            )
+            .bind(
+                crypto.randomUUID(), row.id, userId, locale, day,
+                rope.key, rope.forms[0] ?? rope.key,
+                hers.has(rope.key) ? 'prompt' : 'other',
+                rope.hit ? 1 : 0, wanted.length, pays
+            )
+            .run();
     }
     // The stored row is the truth: it carries the rewrite defaults too.
     return roundView((await readRound(db, userId, day)) ?? row, draft);

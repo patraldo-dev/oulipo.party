@@ -12,7 +12,7 @@
     import WordPicker from '#lib/components/WordPicker.svelte';
     import WritingSpace from '#lib/components/WritingSpace.svelte';
     import { DUEL } from '#lib/oulipo/duel-rules.js';
-    import { pieceView, savedPiece } from '#lib/piece.js';
+    import { pieceView, promptKeySet, savedPiece } from '#lib/piece.js';
     import { post } from '#lib/api.js';
 
     /** @typedef {import('#lib/oulipo/types.js').RoundView} RoundView */
@@ -55,6 +55,8 @@
         story_too_long: 'duel.too_long',
         rope_not_in_story: 'duel.rope_bad',
         ropes_missing: 'duel.rope_bad',
+        prompt_word: 'duel.prompt_free',
+        too_many_words: 'duel.too_many',
         already_locked: 'duel.already_locked',
         draft_failed: 'duel.prepare_failed',
         prompt_failed: 'duel.prepare_failed',
@@ -89,12 +91,25 @@
     const piece = $derived(pieceView(story, lang));
     const candidates = $derived(piece.candidates);
     const storyFits = $derived(piece.storyFits);
+    /**
+     * The words the day's prompt gave her already. They cannot be sent —
+     * the picker greys them out, and the server refuses them. Derived from
+     * the prompt text with the same folding the game gives every word.
+     */
+    const hers = $derived(promptKeySet(prompt, lang));
     /** Nothing is pressed while a request, or a file, is under way. */
     const held = $derived(busy !== '' || importing);
 
     /** The words of a message, with its numbers filled in. @param {string} key */
     function noticeText(key) {
-        return fill($t(key), { n: key === 'duel.too_long' ? DUEL.maxStoryWords : DUEL.minStoryWords });
+        return fill($t(key), {
+            n:
+                key === 'duel.too_long'
+                    ? DUEL.maxStoryWords
+                    : key === 'duel.too_many'
+                      ? DUEL.sendCap
+                      : DUEL.minStoryWords
+        });
     }
 
     const rewriteStatus = $derived(round?.rewrite.status ?? 'pending');
@@ -257,7 +272,7 @@
         <WritingSpace saveKey={PIECE_KEY} bind:story bind:working={importing} disabled={busy !== ''} oninput={() => (notice = '')} />
 
         {#if candidates.length}
-            <WordPicker {lang} {candidates} bind:chosen disabled={held}>
+            <WordPicker {lang} {candidates} neutral={hers} bind:chosen disabled={held}>
                 <div class="row">
                     <button
                         class="btn-primary big"
@@ -308,6 +323,15 @@
                 {round.muzzlePct > 0 ? fill($t('duel.muzzle_line'), { pct: round.muzzlePct }) : $t('duel.muzzle_none')}
             </p>
             <p class="caption">{fill($t('duel.sent_line'), { tier: $t(`duel.tier.${round.tier}`) })}</p>
+            <p class="caption">
+                {fill($t('duel.sent_contract'), {
+                    n: round.ropeCount,
+                    name: $t(`duel.contract.${round.contractName}`),
+                    hits: round.hits,
+                    pays: round.pays,
+                    score: round.score
+                })}
+            </p>
             <div class="row">
                 <button class="btn-secondary small" type="button" onclick={share}>{$t('duel.share')}</button>
             </div>
