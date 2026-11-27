@@ -117,7 +117,7 @@
                 <input
                     class="code"
                     bind:value={code}
-                    maxlength={SIEGE.codeLength}
+                    maxlength={SIEGE.codeLength + 4}
                     autocomplete="off"
                     autocapitalize="characters"
                     spellcheck="false"
@@ -139,7 +139,9 @@
         gap: 0.6rem;
         margin-top: 1rem;
     }
-    /* The code is short and read out loud: give it room and spread its letters. */
+    /* The code is short and read out loud: give it room and spread its letters.
+       The field takes a few characters more than the code has, so that a space
+       or a dash typed in the middle is not cut off; it is cleaned on the way in. */
     .code {
         flex: 1 1 10rem;
         min-width: 0;

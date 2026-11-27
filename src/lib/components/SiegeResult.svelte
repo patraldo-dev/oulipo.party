@@ -55,11 +55,16 @@
             </div>
         </dl>
         {#if mine.original > 0}
-            <p class="caption">{fill($t('siege.original_line'), { n: mine.original, points: mine.original * SIEGE.originalBonus })}</p>
+            <p class="caption">
+                {fill($t(mine.original === 1 ? 'siege.original_one' : 'siege.original_line'), { n: mine.original, points: mine.original * SIEGE.originalBonus })}
+            </p>
         {/if}
         {#if mine.unanimous > 0}
             <p class="caption">
-                {fill($t('siege.unanimous_line'), { n: mine.unanimous, points: mine.unanimous * result.players * SIEGE.unanimousEach })}
+                {fill($t(mine.unanimous === 1 ? 'siege.unanimous_one' : 'siege.unanimous_line'), {
+                    n: mine.unanimous,
+                    points: mine.unanimous * result.players * SIEGE.unanimousEach
+                })}
             </p>
         {/if}
         {#if mine.bonus === 0}

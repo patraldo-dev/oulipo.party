@@ -47,7 +47,7 @@
             <p class="status">
                 {#if !data.signedIn}
                     {$t('hub.signin_hint')}
-                {:else if data.siege}
+                {:else if data.siege && data.siege.open > 0}
                     {fill($t('hub.siege_open'), { n: data.siege.open })}
                     {#if data.siege.waiting}&nbsp;· {fill($t('hub.siege_waiting'), { n: data.siege.waiting })}{/if}
                 {:else}

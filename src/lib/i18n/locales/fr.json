@@ -192,6 +192,8 @@
   "siege.already_locked": "Tes mots sont déjà verrouillés. Les voilà.",
   "siege.resolved": "C’est réglé. À vous tous, {union} mots différents sont partis contre elle.",
   "siege.bonus": "Bonus",
+  "siege.original_one": "1 mot trouvé par une seule personne (+{points})",
+  "siege.unanimous_one": "1 mot trouvé par tout le monde (+{points})",
   "siege.original_line": "{n} mots trouvés par une seule personne (+{points})",
   "siege.unanimous_line": "{n} mots trouvés par tout le monde (+{points})",
   "siege.bonus_none": "Pas de bonus : aucun mot n’a été trouvé par une seule personne, ni par tout le monde.",

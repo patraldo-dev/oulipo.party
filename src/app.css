@@ -899,6 +899,13 @@ html[data-theme='dark'] .game-page {
 .game-page mark.miss {
   background: #d13d3d;
 }
+/* A found word keeps white letters on its tile of colour. The green and red
+   helpers further down give the classes "hit" and "miss" their lettering,
+   and would otherwise paint these letters the colour of the tile. */
+.game-page mark.hit,
+.game-page mark.miss {
+  color: #ffffff;
+}
 .game-page .waiting {
   display: flex;
   gap: 0.6rem;

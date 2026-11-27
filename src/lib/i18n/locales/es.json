@@ -192,6 +192,8 @@
   "siege.already_locked": "Tus palabras ya están bloqueadas. Aquí están.",
   "siege.resolved": "Resuelto. Entre todos enviaron {union} palabras distintas.",
   "siege.bonus": "Bonificación",
+  "siege.original_one": "1 palabra que nadie más encontró (+{points})",
+  "siege.unanimous_one": "1 palabra que todos encontraron (+{points})",
   "siege.original_line": "{n} palabras que nadie más encontró (+{points})",
   "siege.unanimous_line": "{n} palabras que todos encontraron (+{points})",
   "siege.bonus_none": "Sin bonificación: ninguna palabra la encontró una sola persona, ni la encontraron todos.",

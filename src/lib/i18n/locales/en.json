@@ -192,6 +192,8 @@
   "siege.already_locked": "Your words are already locked. Here they are.",
   "siege.resolved": "Resolved. Between you, {union} different words went against her.",
   "siege.bonus": "Bonus",
+  "siege.original_one": "1 word nobody else found (+{points})",
+  "siege.unanimous_one": "1 word everyone found (+{points})",
   "siege.original_line": "{n} words nobody else found (+{points})",
   "siege.unanimous_line": "{n} words everyone found (+{points})",
   "siege.bonus_none": "No bonus: no word was found by one player alone, or by all of you.",
