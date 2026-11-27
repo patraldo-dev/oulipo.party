@@ -30,7 +30,7 @@ import {
     normalizeText,
     tierFor
 } from '#lib/oulipo/engine.js';
-import { DUEL, contractName, contractPays } from '#lib/oulipo/duel-rules.js';
+import { DUEL, contractName, contractPays, wagerScore } from '#lib/oulipo/duel-rules.js';
 import { ensurePrompt, PromptError } from './daily-prompt.js';
 import { betterAttempt, generateDraft, rewritePass } from './oulipo-sappho.js';
 import { SAPPHO_MODEL } from './sappho-persona.js';
@@ -267,9 +267,6 @@ export async function lockDuel(db, ai, { userId, locale, day, story, ropes }) {
     const storyAnalysis = analyze(story, locale, policy);
     const available = new Set(storyAnalysis.types.map((type) => type.key));
     const wanted = [...new Set(ropes)];
-    if (wanted.length > DUEL.sendCap) {
-        throw new DuelError(400, 'too_many_words', `${wanted.length} words`);
-    }
     const invalid = wanted.filter((key) => typeof key !== 'string' || !available.has(key));
     if (invalid.length) {
         throw new DuelError(400, 'rope_not_in_story', invalid.slice(0, 10).join(', '));
@@ -297,11 +294,12 @@ export async function lockDuel(db, ai, { userId, locale, day, story, ropes }) {
     }
 
     const verdict = judge(story, draft.content, locale, policy, wanted);
-    // The wager is the count: hits only, and how much a hit pays is set by
-    // how many words were sent. A miss costs nothing but its slot, so the
-    // score can only climb from zero.
+    // The wager is the count, in inverse proportion: twenty divided by the
+    // words sent, capped at the moon shot's five. Hits only — a miss costs
+    // nothing but its slot — so the score can only climb from zero, and a
+    // perfect round scores 20 whatever the count.
     const pays = contractPays(wanted.length);
-    const score = verdict.hits * pays;
+    const score = wagerScore(verdict.hits, wanted.length);
     /** @type {Row} */
     const row = {
         id: crypto.randomUUID(),

@@ -6,7 +6,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 
 import { analyze } from '../src/lib/oulipo/engine.js';
-import { DUEL, contractName, contractPays } from '../src/lib/oulipo/duel-rules.js';
+import { DUEL, contractName, contractPays, wagerScore } from '../src/lib/oulipo/duel-rules.js';
 import {
     DuelError,
     duelDay,
@@ -41,8 +41,7 @@ const lock = (db, overrides = {}) =>
         locale: 'es',
         day: DAY,
         story: SCENES.es.story,
-        // The story has 30 sendable keys; the wager takes at most the cap.
-        ropes: keysOf(SCENES.es.story, 'es').slice(0, DUEL.sendCap),
+        ropes: keysOf(SCENES.es.story, 'es'),
         ...overrides
     });
 
@@ -232,14 +231,31 @@ test('lock re-checks every rope against the story on the server', async () => {
     assert.equal(db.rows('SELECT COUNT(*) AS n FROM oulipo_duel_rounds')[0].n, 0);
 });
 
-test('the wager pays by the count: fewer words, the more each hit pays', () => {
-    // The tiers, at their edges: 4 → ×5, 5 → ×2.5, 8 → ×2.5, 9 → ×1.5,
-    // 14 → ×1.5, 15 → ×1, 20 → ×1. Above the cap, the last tier's rate.
+test('the wager pays by the count, in inverse proportion: twenty divided by the words', () => {
+    // Up to four words the moon shot's ×5 holds; past that, 20/n exactly.
+    const pays = (n) => contractPays(n);
+    assert.equal(pays(1), 5);
+    assert.equal(pays(4), 5);
+    assert.equal(pays(5), 4);
+    assert.equal(pays(8), 2.5);
+    assert.ok(Math.abs(pays(9) - 20 / 9) < 1e-12);
+    assert.equal(pays(20), 1);
+    assert.ok(Math.abs(pays(95) - 20 / 95) < 1e-12, 'the whole piece can go, a word at a time worth almost nothing');
+    assert.ok(Math.abs(pays(150) - 20 / 150) < 1e-12);
+    // The names label the dial's regions: 0 moon shot, 1 bold wager,
+    // 2 steady hand, 3 full cord, 4 wide net, 5 buckshot.
     assert.deepEqual(
-        [1, 4, 5, 8, 9, 14, 15, 20, 99].map((n) => contractPays(n)),
-        [5, 5, 2.5, 2.5, 1.5, 1.5, 1, 1, 1]
+        [1, 4, 5, 8, 9, 14, 15, 20, 21, 40, 41, 150].map((n) => contractName(n)),
+        [0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5]
     );
-    assert.deepEqual([4, 5, 8, 9, 14, 15, 20, 99].map((n) => contractName(n)), [0, 1, 1, 2, 2, 3, 3, 3]);
+});
+
+test('a perfect round scores twenty, whatever the count', () => {
+    // 4 hits at ×5 and 95 hits at 20/95 land on the same 20.
+    assert.equal(wagerScore(4, 4), 20);
+    assert.equal(wagerScore(95, 95), 20);
+    assert.equal(wagerScore(3, 4), 15);
+    assert.equal(wagerScore(0, 30), 0, 'a miss costs nothing but its slot');
 });
 
 test('a word of the prompt is hers already: it cannot be sent', async () => {
@@ -255,12 +271,17 @@ test('a word of the prompt is hers already: it cannot be sent', async () => {
     assert.equal(db.rows('SELECT COUNT(*) AS n FROM oulipo_duel_rounds')[0].n, 0);
 });
 
-test('more words than the cap is not a wager, it is a shotgun: refused', async () => {
+test('the whole piece can be sent: no cap, and the pay shrinks in proportion', async () => {
     const db = await setup();
     const keys = keysOf(SCENES.es.story, 'es');
-    assert.ok(keys.length > DUEL.sendCap, 'the fixture has more keys than the cap, for this test to mean anything');
-    await rejectsCode(lock(db, { ropes: keys }), 400, 'too_many_words');
-    assert.equal(db.rows('SELECT COUNT(*) AS n FROM oulipo_duel_rounds')[0].n, 0);
+    assert.ok(keys.length > 20, 'the fixture has more keys than the old cap, for this test to mean anything');
+    const view = await lock(db, { ropes: keys });
+    assert.equal(view.ropeCount, keys.length);
+    assert.equal(view.contractName, 4, 'a send of thirty is the wide net');
+    assert.ok(Math.abs(view.pays - 20 / keys.length) < 1e-12);
+    assert.equal(view.score, Math.round(view.hits * (20 / keys.length)));
+    const stored = await readRound(db, 'player', DAY);
+    assert.equal(stored.score, view.score);
 });
 
 test('misses cost nothing but their slot, and the ledger remembers every word', async () => {

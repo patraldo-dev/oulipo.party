@@ -56,7 +56,6 @@
         rope_not_in_story: 'duel.rope_bad',
         ropes_missing: 'duel.rope_bad',
         prompt_word: 'duel.prompt_free',
-        too_many_words: 'duel.too_many',
         already_locked: 'duel.already_locked',
         draft_failed: 'duel.prepare_failed',
         prompt_failed: 'duel.prepare_failed',
@@ -102,14 +101,17 @@
 
     /** The words of a message, with its numbers filled in. @param {string} key */
     function noticeText(key) {
-        return fill($t(key), {
-            n:
-                key === 'duel.too_long'
-                    ? DUEL.maxStoryWords
-                    : key === 'duel.too_many'
-                      ? DUEL.sendCap
-                      : DUEL.minStoryWords
-        });
+        return fill($t(key), { n: key === 'duel.too_long' ? DUEL.maxStoryWords : DUEL.minStoryWords });
+    }
+
+    /**
+     * What one hit paid, said shortly: the wager divides twenty by the count,
+     * which rarely lands on a short decimal — the page says ×0.42, not the
+     * whole tail.
+     * @param {number} pays
+     */
+    function saidPays(pays) {
+        return String(Math.round(pays * 100) / 100);
     }
 
     const rewriteStatus = $derived(round?.rewrite.status ?? 'pending');
@@ -327,8 +329,7 @@
                 {fill($t('duel.sent_contract'), {
                     n: round.ropeCount,
                     name: $t(`duel.contract.${round.contractName}`),
-                    hits: round.hits,
-                    pays: round.pays,
+                    pays: saidPays(round.pays),
                     score: round.score
                 })}
             </p>

@@ -25,12 +25,7 @@ export const DUEL = Object.freeze({
     /** The most text ever stored or shown for one of her pieces. */
     maxPieceChars: 8000,
     /** Names listed on the day's board. */
-    boardSize: 10,
-    /**
-     * The most words one duel may send. The wager is the count: the slider
-     * cannot offer more, and the API refuses more.
-     */
-    sendCap: 20
+    boardSize: 10
 });
 
 /** Scoring in the Siege: a word the draft used earns +1, a word it did not costs 1. */
@@ -38,40 +33,64 @@ export const HIT = 1;
 export const MISS = -1;
 
 /**
- * The Duel's wager, decided 2026-11-27. Hits only — a miss costs nothing but
- * its slot — and how much a hit pays is set by how many words were sent:
- * fewer words, a bolder bet, a bigger pay. The numbers here are the opening
- * guess; the ledger (migration 0006) is what will retune them on real play.
+ * The Duel's wager (decided 2026-11-27, uncapped after the first day of
+ * play). Hits only — a miss costs nothing but its slot. There is no limit on
+ * how many words may be sent; the wager is the count, in inverse proportion:
+ * a hit pays 20 divided by the words sent, so a whole piece can go but each
+ * of its words is worth almost nothing. Four words or fewer pay ×5 — the
+ * moon shot — and no bet pays more than that. A perfect round therefore
+ * scores 20 whatever the count: 4 hits at ×5, or 95 hits at ×0.21.
+ * The names below label the regions of the dial, in `duel.contract.0…5`.
  */
 export const CONTRACT = Object.freeze({
+    /** The most a single hit can pay. */
+    topPays: 5,
+    /** The dividend the wager divides: pays = dividend / count. */
+    dividend: 20,
+    /** Where each wager's name begins. */
     tiers: Object.freeze([
         /** Up to 4 words: the moon shot. */
-        { upTo: 4, pays: 5 },
+        { upTo: 4, name: 0 },
         /** Up to 8: the bold wager. */
-        { upTo: 8, pays: 2.5 },
+        { upTo: 8, name: 1 },
         /** Up to 14: the steady hand. */
-        { upTo: 14, pays: 1.5 },
-        /** Up to the cap of 20: the full cord. */
-        { upTo: DUEL.sendCap, pays: 1 }
+        { upTo: 14, name: 2 },
+        /** Up to 20: the full cord. */
+        { upTo: 20, name: 3 },
+        /** Up to 40: the wide net. */
+        { upTo: 40, name: 4 },
+        /** Beyond that: the buckshot. */
+        { upTo: Number.POSITIVE_INFINITY, name: 5 }
     ])
 });
 
 /**
- * What a hit pays for a contract of `count` words. Anything above the cap
- * pays the last tier's rate; the cap itself is refused before this is asked.
+ * What one hit pays for a wager of `count` words: twenty divided by the
+ * count, capped at the moon shot's ×5. Rounded nowhere — the score is
+ * rounded once, at the end.
  * @param {number} count
  */
 export function contractPays(count) {
-    for (const tier of CONTRACT.tiers) if (count <= tier.upTo) return tier.pays;
-    return CONTRACT.tiers[CONTRACT.tiers.length - 1].pays;
+    if (!Number.isFinite(count) || count <= 0) return CONTRACT.topPays;
+    return Math.min(CONTRACT.topPays, CONTRACT.dividend / count);
 }
 
 /**
- * Which named wager a contract of `count` words is — the index into the
- * messages `duel.contract.0…3`.
+ * Which named wager a count of words sits in — the index into the messages
+ * `duel.contract.0…5`.
  * @param {number} count
  */
 export function contractName(count) {
-    for (const [index, tier] of CONTRACT.tiers.entries()) if (count <= tier.upTo) return index;
-    return CONTRACT.tiers.length - 1;
+    for (const tier of CONTRACT.tiers) if (count <= tier.upTo) return tier.name;
+    return CONTRACT.tiers[CONTRACT.tiers.length - 1].name;
+}
+
+/**
+ * The score a round earns: hits only, each paying its wager's rate, rounded
+ * to whole points once. Never below zero — a miss costs nothing but its slot.
+ * @param {number} hits
+ * @param {number} count
+ */
+export function wagerScore(hits, count) {
+    return Math.round(hits * contractPays(count));
 }

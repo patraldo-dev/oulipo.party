@@ -78,7 +78,6 @@
   "duel.choose_body": "Elige palabras de tu propia pieza para vedárselas; las del prompt van en gris. El slider es tu apuesta: bájalo para enviar menos palabras y que cada acierto pague más. Toca una palabra para añadirla o quitarla. Nada se envía hasta que confirmas.",
   "duel.ropes_count": "{n} de {total} palabras elegidas",
   "duel.send_all": "Elegir todas",
-  "duel.clear": "No elegir ninguna",
   "duel.lock": "Enviarlas y bloquear",
   "duel.lock_hint": "Esto las envía y bloquea el duelo de hoy. No se puede deshacer.",
   "duel.locked_notice": "Bloqueado. Vuelve mañana para un duelo nuevo.",
@@ -124,7 +123,7 @@
   "duel.drop_here": "Suéltalo para traer sus palabras.",
   "duel.clear_story": "Empezar de nuevo",
   "duel.clear_story_confirm": "¿Borrar lo que escribiste?",
-  "duel.autosave_hint": "Se guarda en este navegador hasta que lo bloquees.",
+  "duel.autosave_hint": "✓ Se guarda en este navegador hasta que lo bloquees.",
   "duel.import_replace_confirm": "¿Reemplazar lo que escribiste con las palabras de este archivo?",
   "duel.import_cut": "El archivo es más largo de lo que admite la caja: solo se importaron sus primeras {n} palabras.",
   "hub.title": "Los juegos de hoy",
@@ -215,6 +214,7 @@
   "duel.contract.1": "la apuesta osada",
   "duel.contract.2": "la mano firme",
   "duel.contract.3": "el cordón entero",
-  "duel.sent_contract": "Enviaste {n} palabras — {name}: {hits} × {pays} = {score}.",
-  "duel.too_many": "Envía {n} palabras como mucho."
+  "duel.sent_contract": "Enviaste {n} palabras — {name}. Cada acierto pagó ×{pays}; puntuación {score}.",
+  "duel.contract.4": "la red ancha",
+  "duel.contract.5": "la perdigonada"
 }

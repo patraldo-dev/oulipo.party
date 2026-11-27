@@ -78,7 +78,6 @@
   "duel.choose_body": "Choisis des mots de ta propre pièce pour les lui interdire ; ceux du prompt sont grisés. Le curseur, c’est ton pari : descends-le pour envoyer moins de mots et que chaque trouvaille paie plus. Touche un mot pour l’ajouter ou le retirer. Rien n’est envoyé avant que tu confirmes.",
   "duel.ropes_count": "{n} mots choisis sur {total}",
   "duel.send_all": "Tout choisir",
-  "duel.clear": "Ne rien choisir",
   "duel.lock": "Envoyer et verrouiller",
   "duel.lock_hint": "Cela les envoie et verrouille le duel du jour. Sans retour.",
   "duel.locked_notice": "Verrouillé. Reviens demain pour un nouveau duel.",
@@ -124,7 +123,7 @@
   "duel.drop_here": "Dépose-le pour en faire ton texte.",
   "duel.clear_story": "Recommencer",
   "duel.clear_story_confirm": "Effacer ce que tu as écrit ?",
-  "duel.autosave_hint": "Gardé dans ce navigateur jusqu’au verrouillage.",
+  "duel.autosave_hint": "✓ Gardé dans ce navigateur jusqu’au verrouillage.",
   "duel.import_replace_confirm": "Remplacer ce que tu as écrit par les mots de ce fichier ?",
   "duel.import_cut": "Le fichier est plus long que ce que la zone peut contenir : seuls ses {n} premiers mots ont été importés.",
   "hub.title": "Les jeux du jour",
@@ -215,6 +214,7 @@
   "duel.contract.1": "le pari hardi",
   "duel.contract.2": "la main sûre",
   "duel.contract.3": "le cordon entier",
-  "duel.sent_contract": "Tu as envoyé {n} mots — {name} : {hits} × {pays} = {score}.",
-  "duel.too_many": "Envoie au plus {n} mots."
+  "duel.sent_contract": "Tu as envoyé {n} mots — {name}. Chaque trouvaille payait ×{pays} ; score {score}.",
+  "duel.contract.4": "le grand filet",
+  "duel.contract.5": "le chevrotin"
 }

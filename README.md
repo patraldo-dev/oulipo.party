@@ -15,10 +15,11 @@ and became its own site here.
 3. Only your own words can be sent — the ones the prompt gave her sit greyed
    out. Hits only: a miss costs nothing but its slot, so the score never falls
    below zero. Small words never count, in any of the three languages.
-4. The wager is the count. Four words sent pay ×5 a hit; eight pay ×2.5;
-   fourteen pay ×1.5; twenty pay ×1. The numbers are in
-   `src/lib/oulipo/duel-rules.js`, retuned on the ledger (`duel_ledger`) as
-   real play accumulates.
+4. The wager is the count, in inverse proportion — there is no cap. A hit
+   pays 20 divided by the words sent, capped at ×5: four words pay ×5 a hit,
+   twenty pay ×1, ninety-five pay about ×0.2. A perfect round scores 20
+   whatever the count. The numbers are in `src/lib/oulipo/duel-rules.js`,
+   retuned on the ledger (`duel_ledger`) as real play accumulates.
 5. One duel a day. After you lock it, she rewrites her piece without your words.
 
 ## Run it

@@ -78,7 +78,6 @@
   "duel.choose_body": "Pick words from your own piece to forbid her; the prompt’s words are greyed out. The slider is your wager: slide it down to send fewer words for a bigger pay. Tap a word to add it or take it back. Nothing is sent until you lock in.",
   "duel.ropes_count": "{n} of {total} words picked",
   "duel.send_all": "Pick all",
-  "duel.clear": "Pick none",
   "duel.lock": "Send them and lock in",
   "duel.lock_hint": "This sends them and locks today’s duel. It cannot be undone.",
   "duel.locked_notice": "Locked. Come back tomorrow for a new duel.",
@@ -124,7 +123,7 @@
   "duel.drop_here": "Drop it to bring its words in.",
   "duel.clear_story": "Start over",
   "duel.clear_story_confirm": "Erase what you wrote?",
-  "duel.autosave_hint": "Kept in this browser until you lock it.",
+  "duel.autosave_hint": "✓ Kept in this browser until you lock it.",
   "duel.import_replace_confirm": "Replace what you wrote with the words in this file?",
   "duel.import_cut": "The file is longer than the box holds: only its first {n} words were brought in.",
   "hub.title": "Today's games",
@@ -215,6 +214,7 @@
   "duel.contract.1": "the bold wager",
   "duel.contract.2": "the steady hand",
   "duel.contract.3": "the full cord",
-  "duel.sent_contract": "You sent {n} words — {name}: {hits} × {pays} = {score}.",
-  "duel.too_many": "Send {n} words at most."
+  "duel.sent_contract": "You sent {n} words — {name}. Each hit paid ×{pays}; score {score}.",
+  "duel.contract.4": "the wide net",
+  "duel.contract.5": "the buckshot"
 }

@@ -110,9 +110,6 @@
         <button class="btn-secondary small" type="button" onclick={() => sendFirst(sendable.length)} disabled={disabled || target === sendable.length}>
             {$t('duel.send_all')}
         </button>
-        <button class="btn-secondary small" type="button" onclick={() => sendFirst(0)} disabled={disabled || target === 0}>
-            {$t('duel.clear')}
-        </button>
     </div>
     <div class="chips">
         {#each candidates as type (type.key)}

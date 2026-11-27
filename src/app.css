@@ -604,9 +604,9 @@ html[data-theme='dark'] .game-page {
   gap: 0.6rem;
 }
 .game-page .kept {
-  color: var(--text-muted);
+  color: var(--accent);
   font-size: 0.82rem;
-  font-weight: 500;
+  font-weight: 600;
 }
 /* The picker itself stays out of sight; its button opens it. */
 .game-page .file {
