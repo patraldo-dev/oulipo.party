@@ -1,37 +1,37 @@
 # oulipo.party
 
-A daily game for writers, in English, Spanish and French. Sappho, the
-storyteller, has written a hidden piece for today's prompt. Write one of your
+A daily game for writers, in English, Spanish and French. Gulliver, the
+traveller and teller of tales, has written a hidden piece for today's prompt. Write one of your
 own, send a wager of its words against hers — the fewer you send, the more
-each hit pays. Then she rewrites her piece without a single word you sent.
+each hit pays. Then he rewrites his piece without a single word you sent.
 
 The game was born in the writing community at [patrouch.ca](https://patrouch.ca)
 and became its own site here.
 
 ## How a duel goes
 
-1. The day's prompt is one per language. A **round** is: prepare — Sappho
+1. The day's prompt is one per language. A **round** is: prepare — Gulliver
    writes a fresh hidden piece against it — then you write and send. No limit
    but a safeguard: twelve locked rounds a day. Every round's piece is new;
    the board ranks each member's best round of the day.
 2. You write a piece of your own (30 to 300 words; a longer piece counts up to 300) and send some of its words.
-3. Only your own words can be sent — the ones the prompt gave her sit greyed
+3. Only your own words can be sent — the ones the prompt gave him sit greyed
    out, and the editor checks your spelling before anything is sent (unknown
    words are named; sending anyway is one press away). Hits only: a miss
    costs nothing but its slot. Small words never count, in any of the three languages.
 4. Two layers of judgement. **The pot is your writing**: one point per fifteen
    words written, so a 300-word piece plays for 20 and a 30-word piece for 2.
    A hit pays the pot divided by the words sent — fewer words, more per hit,
-   and a perfect round scores the pot. **The craft grade**: at lock, Sappho
+   and a perfect round scores the pot. **The craft grade**: at lock, Gulliver
    reads the whole piece and grades it ✦–✦✦✦✦ (plain ×0.75 to remarkable
    ×1.5), multiplying the score. The numbers are in
    `src/lib/oulipo/duel-rules.js`, retuned on the ledger (`duel_ledger`) as real play accumulates.
 5. The score banks to your **purse** (new members start with 10). Before
    locking you can stake purse points on your own round's hidden piece —
-   "she uses it" (×12) or "she never uses it" (×1.5), three stakes a round —
-   settled by the piece itself when you lock. If she smuggles one of your hit
-   words back into her rewrite, the jailbreak dividend pays +2 a word.
-6. After the lock, she rewrites her piece without your words.
+   "he uses it" (×12) or "he never uses it" (×1.5), three stakes a round —
+   settled by the piece itself when you lock. If he smuggles one of your hit
+   words back into his rewrite, the jailbreak dividend pays +2 a word.
+6. After the lock, he rewrites his piece without your words.
 
 ## Run it
 
@@ -50,7 +50,7 @@ and a scripted stand-in for the model.
 
 1. One member starts a room and gets a five-character code; up to eight share
    it. The code keeps working every day: each day the room has a new round, on
-   the day's prompt, with a hidden piece of Sappho's that is the room's own.
+   the day's prompt, with a hidden piece of Gulliver's that is the room's own.
 2. Whoever opens the room that day is counted in until they lock, sit out, or
    the day ends. Each writes a piece and locks words exactly as in the Duel.
 3. The round resolves the moment the last of them locks — or when the day is
@@ -59,7 +59,7 @@ and a scripted stand-in for the model.
    −1. A hit only one player found earns +1 more; a hit every player found
    earns +1 per player; a word among the prompt's own words earns neither.
    The numbers are in `src/lib/oulipo/siege-rules.js`.
-5. She then rewrites her piece without a word any of them sent.
+5. He then rewrites his piece without a word any of them sent.
 
 The result of an earlier day is at `/siege/CODE/DATE`.
 
@@ -70,8 +70,8 @@ The result of an earlier day is at `/siege/CODE/DATE`.
 - `src/lib/server/oulipo-duel.js` — the duel's rules and flow, taking `db` and
   `ai` as arguments.
 - `src/lib/server/daily-prompt.js` — the day's prompt, one per language.
-- `src/lib/server/sappho-persona.js`, `oulipo-sappho.js` — how Sappho is asked
-  to write, and how her rewrite is checked.
+- `src/lib/server/sappho-persona.js`, `oulipo-sappho.js` — how Gulliver is asked
+  to write, and how his rewrite is checked.
 - `src/lib/auth.js` — members: email with a password, or Google, GitHub or
   Discord. Mail goes through Cloudflare's Email Sending
   (`src/lib/server/email-sender.js`).
@@ -82,7 +82,7 @@ The result of an earlier day is at `/siege/CODE/DATE`.
 - `src/lib/oulipo/siege-rules.js`, `src/lib/server/siege.js` — the Siege's
   rules and its flow, taking `db` and `ai` as the Duel's do.
 - `src/lib/components/` — the pieces a game page is built from: the writing
-  space, the word picker, her rewrite. Their look is in `src/app.css`, under
+  space, the word picker, his rewrite. Their look is in `src/app.css`, under
   `.game-page`.
 - `src/lib/piece.js` — what a game takes from a piece: the part that counts,
   and the words there are to send.
