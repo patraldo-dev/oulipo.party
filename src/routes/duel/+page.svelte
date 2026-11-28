@@ -11,8 +11,9 @@
     import RewriteCard from '#lib/components/RewriteCard.svelte';
     import WordPicker from '#lib/components/WordPicker.svelte';
     import WritingSpace from '#lib/components/WritingSpace.svelte';
-    import { DUEL } from '#lib/oulipo/duel-rules.js';
+    import { DUEL, SIDE_BET } from '#lib/oulipo/duel-rules.js';
     import { pieceView, promptKeySet, savedPiece } from '#lib/piece.js';
+    import { suspiciousWords } from '#lib/spell.js';
     import { post } from '#lib/api.js';
 
     /** @typedef {import('#lib/oulipo/types.js').RoundView} RoundView */
@@ -29,17 +30,19 @@
         stage: /** @type {Stage} */ (
             data.unavailable
                 ? 'unavailable'
-                : data.round
-                  ? 'locked'
-                  : !data.signedIn
-                    ? 'signin'
-                    : data.prompt && data.draftReady
-                      ? 'write'
+                : !data.signedIn
+                  ? 'signin'
+                  : data.draftReady
+                    ? 'write'
+                    : data.round
+                      ? 'locked'
                       : 'preparing'
         ),
         prompt: data.prompt?.text ?? '',
         round: /** @type {RoundView | null} */ (data.round ?? null),
-        board: data.board ?? []
+        board: data.board ?? [],
+        purse: typeof data.purse === 'number' ? data.purse : null,
+        streak: typeof data.streak === 'number' ? data.streak : 0
     };
 
     const lang = start.locale;
@@ -57,6 +60,12 @@
         ropes_missing: 'duel.rope_bad',
         prompt_word: 'duel.prompt_free',
         already_locked: 'duel.already_locked',
+        round_limit: 'duel.round_limit',
+        purse_short: 'duel.purse_short',
+        bet_limit: 'duel.bet_limit',
+        stake_small: 'duel.bet_stake_small',
+        word_unknown: 'duel.rope_bad',
+        round_missing: 'duel.error',
         draft_failed: 'duel.prepare_failed',
         prompt_failed: 'duel.prepare_failed',
         no_engine: 'duel.prepare_failed',
@@ -85,6 +94,24 @@
     /** Passes Sappho has made so far, while the rewrite is still going. */
     let pass = $state(0);
     let pollTimer = $state(/** @type {number | undefined} */ (undefined));
+    /** The purse — banked points — and the member's day streak. */
+    let purse = $state(start.purse);
+    let streak = $state(start.streak);
+    /**
+     * The pre-submit spelling gate: words the dictionary does not know, said
+     * once, then forgotten the moment the piece changes. A second press of
+     * the button sends anyway.
+     */
+    let spellWarned = $state('');
+    /**
+     * Side bets: staked on this round's hidden piece before the lock.
+     */
+    let myWagers = $state(/** @type {{ word: string, side: string, stake: number, status: string, payout: number }[]} */ ([]));
+    let betWord = $state('');
+    let betStake = $state(1);
+    let betNotice = $state('');
+    /** The select itself: its value is read when a stake is placed. */
+    let betSelect = $state(/** @type {HTMLSelectElement | null} */ (null));
 
     /** What the game takes from the piece. Its words are the ones there are to send. */
     const piece = $derived(pieceView(story, lang));
@@ -96,8 +123,36 @@
      * the prompt text with the same folding the game gives every word.
      */
     const hers = $derived(promptKeySet(prompt, lang));
+    /** The words there are to stake on: the piece's own, never hers. */
+    const stakeable = $derived(candidates.filter((type) => !hers.has(type.key)));
     /** Nothing is pressed while a request, or a file, is under way. */
     const held = $derived(busy !== '' || importing);
+
+    // Editing the piece withdraws the spelling warning: the words it named
+    // may no longer be the ones on the page.
+    $effect(() => {
+        void story;
+        spellWarned = '';
+    });
+
+    // The stake starts on the piece's first sendable word, so the buttons are
+    // live the moment the card appears.
+    $effect(() => {
+        if (!betWord && stakeable.length) betWord = stakeable[0].display;
+    });
+
+    /**
+     * The select's own binding does not always show the standing choice when
+     * its options arrive after the value; this keeps the two in step.
+     * @param {HTMLSelectElement} el
+     */
+    const showBetWord = (el) => {
+        const set = () => {
+            if (betWord) el.value = betWord;
+        };
+        set();
+        return { update: set };
+    };
 
     /** The words of a message, with its numbers filled in. @param {string} key */
     function noticeText(key) {
@@ -105,14 +160,17 @@
     }
 
     /**
-     * What one hit paid, said shortly: the wager divides twenty by the count,
-     * which rarely lands on a short decimal — the page says ×0.42, not the
-     * whole tail.
+     * What one hit paid, said shortly: the wager divides the pot by the
+     * count, which rarely lands on a short decimal — the page says ×0.42,
+     * not the whole tail.
      * @param {number} pays
      */
     function saidPays(pays) {
         return String(Math.round(pays * 100) / 100);
     }
+
+    /** The craft grade, as the result says it: ✦ plain to ✦✦✦✦ remarkable. */
+    const craftStars = $derived(round?.craft === null || round?.craft === undefined ? '' : '✦'.repeat(round.craft + 1));
 
     const rewriteStatus = $derived(round?.rewrite.status ?? 'pending');
 
@@ -126,13 +184,33 @@
         busy = '';
         if (ok && payload?.prompt?.text && payload?.draftReady) {
             prompt = payload.prompt.text;
+            chosen = [];
             stage = 'write';
         } else {
-            notice = 'duel.prepare_failed';
+            notice = ERROR_KEYS[payload?.error] ?? 'duel.prepare_failed';
         }
     }
 
+    /** The result panel hands the pen back: another round, the piece kept. */
+    async function playAgain() {
+        chosen = [];
+        await prepare();
+        if (stage === 'write') window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
     async function lock() {
+        // The spelling gate: a word the dictionary does not know is said once
+        // and a second press sends anyway. A dictionary that cannot be had
+        // says nothing and stands in nobody's way.
+        if (!spellWarned) {
+            const bad = await suspiciousWords(piece.counted, lang);
+            if (bad.length) {
+                spellWarned = bad.slice(0, 12).join(', ');
+                notice = '';
+                return;
+            }
+        }
+        spellWarned = '';
         busy = 'lock';
         notice = '';
         const { ok, payload } = await call('lock', { story: piece.counted, ropes: chosen });
@@ -140,11 +218,10 @@
         if (ok && payload?.draft) {
             round = /** @type {RoundView} */ (payload);
             stage = 'locked';
-            try {
-                localStorage.removeItem(PIECE_KEY);
-            } catch {
-                // nothing was kept
-            }
+            // The piece stays kept: another round is one edit away.
+            myWagers = round.wagers.filter((wager) => wager.status !== 'open');
+            if (typeof round.purse === 'number') purse = round.purse;
+            streak = streak > 0 ? streak : 1;
             rewrite();
             loadBoard();
         } else {
@@ -161,7 +238,7 @@
     async function rewrite(tries = 0) {
         busy = 'rewrite';
         notice = '';
-        const { ok, payload } = await call('rewrite', {});
+        const { ok, payload } = await call('rewrite', { roundId: round?.id ?? null });
         if (ok && payload?.draft) {
             round = /** @type {RoundView} */ (payload);
             pass = round.rewrite.attempts;
@@ -184,6 +261,33 @@
     async function loadBoard() {
         const { ok, payload } = await call('board');
         if (ok) board = payload.board ?? [];
+    }
+
+    /**
+     * Stake purse points on this round's hidden piece: that she uses a word,
+     * or that she never does. Charged now; the lock settles it.
+     * @param {'uses' | 'absent'} side
+     */
+    async function placeBet(side) {
+        const word = betSelect?.value || betWord;
+        if (!word || !Number.isFinite(betStake)) return;
+        betNotice = '';
+        const { ok, payload } = await call('wager', { word, side, stake: betStake, story: piece.counted });
+        if (ok && payload && typeof payload.purse === 'number') {
+            purse = payload.purse;
+            myWagers = (payload.wagers ?? []).map(
+                (/** @type {{ word_form: string, side: string, stake: number, status: string, payout: number }} */ wager) => ({
+                    word: wager.word_form,
+                    side: wager.side,
+                    stake: Number(wager.stake),
+                    status: wager.status,
+                    payout: Number(wager.payout)
+                })
+            );
+            betStake = 1;
+        } else {
+            betNotice = ERROR_KEYS[payload?.error] ?? 'duel.error';
+        }
     }
 
     async function share() {
@@ -295,10 +399,58 @@
                         {/if}
                     </span>
                 </div>
+                {#if spellWarned}
+                    <p class="notice" aria-live="assertive">
+                        {fill($t('duel.spell_words'), { words: spellWarned })}
+                        {$t('duel.spell_anyway')}
+                    </p>
+                {/if}
                 {#if notice}
                     <p class="notice" aria-live="assertive">{noticeText(notice)}</p>
                 {/if}
             </WordPicker>
+        {/if}
+
+        {#if stakeable.length}
+            <section class="glass-surface card side-bets">
+                <h2><GameIcon icon="coin" />{$t('duel.bet_title')}</h2>
+                <p class="note">{$t('duel.bet_body')}</p>
+                <p class="purse-line">{fill($t('duel.purse'), { n: purse ?? 0 })}</p>
+                <div class="row wrap">
+                    <label class="bet-field">
+                        <span class="note">{$t('duel.bet_word')}</span>
+                        {#if betWord}
+                            <select bind:this={betSelect} use:showBetWord disabled={held}>
+                                {#each stakeable as type (type.key)}
+                                    <option value={type.display}>{type.display}</option>
+                                {/each}
+                            </select>
+                        {/if}
+                    </label>
+                    <label class="bet-field small">
+                        <span class="note">{$t('duel.bet_stake')}</span>
+                        <input type="number" min="1" step="1" bind:value={betStake} disabled={held} />
+                    </label>
+                    <button class="btn-secondary" type="button" onclick={() => placeBet('uses')} disabled={held || !betWord}>
+                        {fill($t('duel.bet_uses'), { n: SIDE_BET.usesPays })}
+                    </button>
+                    <button class="btn-secondary" type="button" onclick={() => placeBet('absent')} disabled={held || !betWord}>
+                        {fill($t('duel.bet_absent'), { n: SIDE_BET.absentPays })}
+                    </button>
+                </div>
+                {#if myWagers.length}
+                    <ul class="bet-list">
+                        {#each myWagers as wager (wager.word + wager.side)}
+                            <li>
+                                {fill($t(wager.side === 'uses' ? 'duel.bet_on_uses' : 'duel.bet_on_absent'), { word: wager.word, n: wager.stake })}
+                            </li>
+                        {/each}
+                    </ul>
+                {/if}
+                {#if betNotice}
+                    <p class="notice" aria-live="assertive">{noticeText(betNotice)}</p>
+                {/if}
+            </section>
         {/if}
     {:else if stage === 'locked' && round}
         <section class="glass-surface card">
@@ -333,8 +485,30 @@
                     score: round.score
                 })}
             </p>
+            {#if round.purse !== null}
+                <p class="caption purse-line">{fill($t('duel.purse'), { n: round.purse })}</p>
+            {/if}
+            {#if round.craft !== null}
+                <p class="caption craft">{fill($t('duel.craft_line'), { stars: '✦'.repeat(round.craft + 1), name: $t(`duel.craft.${round.craft}`) })}</p>
+            {/if}
+            {#if round.jailbreak !== null && round.jailbreak > 0}
+                <p class="caption jailbreak">{fill($t('duel.jailbreak'), { n: round.jailbreak, m: Math.round(round.jailbreak / 2) })}</p>
+            {/if}
+            {#each round.wagers as wager (wager.word + wager.side)}
+                {#if wager.status === 'won'}
+                    <p class="caption bet won">{fill($t('duel.bet_won'), { word: wager.word, n: wager.payout })}</p>
+                {:else if wager.status === 'lost'}
+                    <p class="caption bet lost">{fill($t('duel.bet_lost'), { word: wager.word, n: wager.stake })}</p>
+                {:else if wager.status === 'void'}
+                    <p class="caption bet">{fill($t('duel.bet_void'), { word: wager.word, n: wager.stake })}</p>
+                {/if}
+            {/each}
+            {#if streak > 0}
+                <p class="caption">{fill($t(streak === 1 ? 'duel.streak_one' : 'duel.streak'), { n: streak })}</p>
+            {/if}
             <div class="row">
                 <button class="btn-secondary small" type="button" onclick={share}>{$t('duel.share')}</button>
+                <button class="btn-primary small" type="button" onclick={playAgain} disabled={held}>{$t('duel.play_again')}</button>
             </div>
             <h3><GameIcon icon="send" size={30} />{$t('duel.your_words')}</h3>
             <div class="chips">

@@ -3,7 +3,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 
 import { ensurePrompt, PROMPT_CHARS, PROMPT_MODEL, PromptError, readPrompt, writePrompt } from '../src/lib/server/daily-prompt.js';
-import { prepareDuel, readDraft } from '../src/lib/server/oulipo-duel.js';
+import { prepareDuel } from '../src/lib/server/oulipo-duel.js';
 import { fakeAi, SqliteD1 } from './helpers.js';
 
 const DAY = '2026-11-24';
@@ -84,11 +84,11 @@ test('a prompt that cannot be written is the duel’s own failure, and nothing i
     console.error = () => {};
     try {
         await assert.rejects(
-            prepareDuel(db, fakeAi([new Error('gateway down')]), 'es', DAY),
+            prepareDuel(db, fakeAi([new Error('gateway down')]), 'player', 'es', DAY),
             (error) => error.code === 'prompt_failed' && error.status === 503 && error.detail === 'engine_failed'
         );
-        await assert.rejects(prepareDuel(db, fakeAi(['Too short.']), 'es', DAY), (error) => error.code === 'prompt_failed');
-        assert.equal(await readDraft(db, 'es', DAY), null, 'no draft without a prompt');
+        await assert.rejects(prepareDuel(db, fakeAi(['Too short.']), 'player', 'es', DAY), (error) => error.code === 'prompt_failed');
+        assert.equal(db.rows('SELECT COUNT(*) AS n FROM oulipo_duel_drafts')[0].n, 0, 'no draft without a prompt');
     } finally {
         console.error = original;
     }

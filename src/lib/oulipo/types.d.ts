@@ -121,7 +121,18 @@ export interface RewriteView {
     spans: Span[];
 }
 
-/** A locked duel as the player sees it. */
+/** A side bet, as the result card shows it. */
+export interface WagerOutcome {
+    word: string;
+    /** 'uses' — she used it — or 'absent' — she never did. */
+    side: string;
+    stake: number;
+    /** 'open' until the round locks, then 'won', 'lost' or 'void'. */
+    status: string;
+    payout: number;
+}
+
+/** A round of the duel as the player sees it. */
 export interface RoundView {
     id: string;
     date: string;
@@ -134,9 +145,19 @@ export interface RoundView {
     hits: number;
     misses: number;
     score: number;
-    /** What one hit paid under the wager sent: set by the count of words. */
+    /** The pot the piece played for: its words ÷ 15. */
+    pot: number;
+    /** What one hit paid under the wager sent: pot ÷ sent. */
     pays: number;
-    /** Which named wager the count was, as the index into `duel.contract.0…3`. */
+    /** The craft grade 0–3, or null for a round the model never graded. */
+    craft: number | null;
+    /** Points paid back for hit words she smuggled into her rewrite; null until the rewrite settles. */
+    jailbreak: number | null;
+    /** The round's side bets, settled at lock. */
+    wagers: WagerOutcome[];
+    /** The member's purse when the view was made; null when nobody asked. */
+    purse: number | null;
+    /** Which named wager the count was, as the index into `duel.contract.0…5`. */
     contractName: number;
     muzzlePct: number;
     tier: number;
@@ -153,6 +174,8 @@ export interface BoardRow {
     hits: number;
     misses: number;
     ropeCount: number;
+    /** The member's best is shown; this is how many rounds they played. */
+    rounds: number;
 }
 
 // ── The Siege ──────────────────────────────────────────────────────────

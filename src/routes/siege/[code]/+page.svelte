@@ -14,6 +14,7 @@
     import { SIEGE, normalizeCode } from '#lib/oulipo/siege-rules.js';
     import { post } from '#lib/api.js';
     import { pieceView, savedPiece } from '#lib/piece.js';
+	import { suspiciousWords } from '#lib/spell.js';
 
     /** @typedef {import('#lib/oulipo/types.js').SiegeView} SiegeView */
     /** @typedef {'signin' | 'error' | 'noRoom' | 'join' | 'preparing' | 'write' | 'out' | 'waiting' | 'resolved' | 'lapsed' | 'late'} Stage */
@@ -76,6 +77,14 @@
     let busy = $state(/** @type {Busy} */ (''));
     /** i18n key of the last message shown. */
     let notice = $state('');
+	/** The pre-submit spelling gate: said once, sent anyway on a second press. */
+	let spellWarned = $state('');
+
+	// Editing the piece withdraws the spelling warning.
+	$effect(() => {
+		void story;
+		spellWarned = '';
+	});
     /** Passes Sappho has made so far, while the rewrite is still going. */
     let pass = $state(0);
     let pollTimer = $state(/** @type {number | undefined} */ (undefined));
@@ -216,6 +225,15 @@
     }
 
     async function lock() {
+        // The spelling gate, as in the Duel: a second press sends anyway.
+        if (!spellWarned) {
+            const bad = await suspiciousWords(piece.counted, lang);
+            if (bad.length) {
+                spellWarned = bad.slice(0, 12).join(', ');
+                return;
+            }
+        }
+        spellWarned = '';
         busy = 'lock';
         notice = '';
         const { ok, payload } = await call('lock', { code: CODE, story: piece.counted, ropes: chosen });
@@ -482,6 +500,12 @@
                                 {/if}
                             </span>
                         </div>
+                        {#if spellWarned}
+                            <p class="notice" aria-live="assertive">
+                                {fill($t('duel.spell_words'), { words: spellWarned })}
+                                {$t('duel.spell_anyway')}
+                            </p>
+                        {/if}
                         {#if notice}
                             <p class="notice" aria-live="assertive">{noticeText(notice)}</p>
                         {/if}

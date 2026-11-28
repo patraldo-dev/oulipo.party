@@ -25,7 +25,12 @@ export const DUEL = Object.freeze({
     /** The most text ever stored or shown for one of her pieces. */
     maxPieceChars: 8000,
     /** Names listed on the day's board. */
-    boardSize: 10
+    boardSize: 10,
+    /**
+     * Locked rounds a member may play in one day. Not a game rule — a
+     * safeguard on model cost; raise it whenever.
+     */
+    roundsPerDay: 12
 });
 
 /** Scoring in the Siege: a word the draft used earns +1, a word it did not costs 1. */
@@ -33,23 +38,22 @@ export const HIT = 1;
 export const MISS = -1;
 
 /**
- * The Duel's wager (decided 2026-11-27, uncapped after the first day of
- * play). Hits only — a miss costs nothing but its slot. There is no limit on
- * how many words may be sent; the wager is the count, in inverse proportion:
- * a hit pays 20 divided by the words sent, so a whole piece can go but each
- * of its words is worth almost nothing. Four words or fewer pay ×5 — the
- * moon shot — and no bet pays more than that. A perfect round therefore
- * scores 20 whatever the count: 4 hits at ×5, or 95 hits at ×0.21.
- * The names below label the regions of the dial, in `duel.contract.0…5`.
+ * The Duel's wager. Hits only — a miss costs nothing but its slot. No limit
+ * on how many words may be sent, and the pay falls in inverse proportion: a
+ * hit pays the pot divided by the words sent. The pot is the piece itself —
+ * one point per fifteen words written — so four lazy words from a thin piece
+ * score almost nothing, and the only way to play for a lot is to have
+ * written a lot. The craft grade multiplies the whole thing. The names
+ * below label the regions of the send dial, in `duel.contract.0…5`.
  */
 export const CONTRACT = Object.freeze({
-    /** The most a single hit can pay. */
-    topPays: 5,
-    /** The dividend the wager divides: pays = dividend / count. */
-    dividend: 20,
+    /** Words written per point of pot. */
+    wordsPerPoint: 15,
+    /** The smallest pot a playable piece (30 words) can have. */
+    minPot: 2,
     /** Where each wager's name begins. */
     tiers: Object.freeze([
-        /** Up to 4 words: the moon shot. */
+        /** Up to 4 words sent: the moon shot. */
         { upTo: 4, name: 0 },
         /** Up to 8: the bold wager. */
         { upTo: 8, name: 1 },
@@ -65,14 +69,24 @@ export const CONTRACT = Object.freeze({
 });
 
 /**
- * What one hit pays for a wager of `count` words: twenty divided by the
- * count, capped at the moon shot's ×5. Rounded nowhere — the score is
- * rounded once, at the end.
- * @param {number} count
+ * The pot a piece of `pieceWords` words plays for: one point per fifteen
+ * words, never less than the thinnest playable piece's two.
+ * @param {number} pieceWords
  */
-export function contractPays(count) {
-    if (!Number.isFinite(count) || count <= 0) return CONTRACT.topPays;
-    return Math.min(CONTRACT.topPays, CONTRACT.dividend / count);
+export function potFor(pieceWords) {
+    if (!Number.isFinite(pieceWords) || pieceWords <= 0) return CONTRACT.minPot;
+    return Math.max(CONTRACT.minPot, Math.round(pieceWords / CONTRACT.wordsPerPoint));
+}
+
+/**
+ * What one hit pays for a wager of `count` words out of a `pot`: the pot
+ * divided by the count. Rounded nowhere — the score is rounded once, at the
+ * end. (The sent count alone still names the wager, `contractName`.)
+ * @param {number} count @param {number} pot
+ */
+export function contractPays(count, pot) {
+    if (!Number.isFinite(count) || count <= 0) return pot;
+    return pot / count;
 }
 
 /**
@@ -86,11 +100,42 @@ export function contractName(count) {
 }
 
 /**
- * The score a round earns: hits only, each paying its wager's rate, rounded
- * to whole points once. Never below zero — a miss costs nothing but its slot.
- * @param {number} hits
- * @param {number} count
+ * The craft grade's multiplier, as the result names it: ✦ plain, ✦✦ able,
+ * ✦✦✦ vivid, ✦✦✦✦ remarkable. Anything unknown grades as able (×1) — a
+ * failed or refused grade must never punish a writer.
+ * @param {number | null | undefined} craft
  */
-export function wagerScore(hits, count) {
-    return Math.round(hits * contractPays(count));
+export function craftPays(craft) {
+    return [0.75, 1, 1.25, 1.5][typeof craft === 'number' ? craft : 1] ?? 1;
 }
+
+/**
+ * The score a round earns: hits only, each paying pot ÷ sent, times the
+ * craft grade, rounded to whole points once. Never below zero — a miss
+ * costs nothing but its slot.
+ * @param {number} hits @param {number} count @param {number} pot @param {number | null | undefined} craft
+ */
+export function wagerScore(hits, count, pot, craft) {
+    return Math.round(hits * contractPays(count, pot) * craftPays(craft));
+}
+
+/**
+ * Side bets, played with the purse. A member stakes purse points, before
+ * locking, on their own round's hidden piece: that she uses a word (rare —
+ * pays big) or that she never does. Settled by the piece itself; every
+ * wager is recorded in `duel_wagers` so the odds can be retuned on play.
+ */
+export const SIDE_BET = Object.freeze({
+    /** "She uses it" — a long shot, as measured: about one word in twenty. */
+    usesPays: 12,
+    /** "She never uses it" — the likely case, pays a little. */
+    absentPays: 1.5,
+    /** Stakes a member may have open on one round. */
+    maxOpen: 3,
+    /** The least a stake may be. */
+    minStake: 1,
+    /** What a new member's purse holds, so betting works on day one. */
+    startPurse: 10,
+    /** Each hit word she smuggles back into her rewrite pays its dividend. */
+    jailbreakPays: 2
+});

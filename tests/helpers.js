@@ -29,6 +29,7 @@ export class SqliteD1 {
         this.db.exec(sql('migrations/0003_daily_prompts.sql'));
         this.db.exec(sql('migrations/0005_siege.sql'));
         this.db.exec(sql('migrations/0006_ledger.sql'));
+        this.db.exec(sql('migrations/0007_rounds_economy.sql'));
     }
 
     prepare(query) {

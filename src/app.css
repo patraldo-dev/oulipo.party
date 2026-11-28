@@ -787,6 +787,53 @@ html[data-theme='dark'] .game-page {
 .game-page .wager {
   font-weight: 600;
 }
+/* The side bets: a purse line, a word to stake on, two buttons. */
+.game-page .side-bets .purse-line {
+  font-weight: 700;
+  color: var(--accent);
+  margin: 0.4rem 0 0.8rem;
+}
+.game-page .bet-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+.game-page .bet-field select,
+.game-page .bet-field input {
+  font-family: var(--font-body);
+  font-size: 0.97rem;
+  padding: 0.4rem 0.6rem;
+  border: 1.5px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface);
+  color: var(--text);
+}
+.game-page .bet-list {
+  list-style: none;
+  padding: 0;
+  margin: 0.6rem 0 0;
+}
+.game-page .bet-list li {
+  font-size: 0.92rem;
+  color: var(--text-muted);
+  padding: 0.15rem 0;
+}
+/* The result's extra lines: the craft grade, the jailbreak dividend, and
+   the side bets as they settled. */
+.game-page .caption.craft {
+  color: var(--accent);
+  font-weight: 600;
+}
+.game-page .caption.jailbreak {
+  font-weight: 600;
+}
+.game-page .caption.bet.won {
+  color: #2e8b57;
+  font-weight: 600;
+}
+.game-page .caption.bet.lost {
+  color: #d13d3d;
+}
 .game-page .chip.static {
   cursor: default;
 }

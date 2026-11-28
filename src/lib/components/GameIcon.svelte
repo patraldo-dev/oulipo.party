@@ -4,7 +4,7 @@
      * simple glyph drawn as geometry, so it stays crisp from a phone up to
      * the hero. Decorative unless a label is given: the heading beside it
      * says what it is.
-     * @type {{ icon: 'duel' | 'siege' | 'prompt' | 'write' | 'send' | 'score' | 'sappho' | 'board', size?: number, label?: string }}
+     * @type {{ icon: 'duel' | 'siege' | 'prompt' | 'write' | 'send' | 'score' | 'sappho' | 'board' | 'coin', size?: number, label?: string }}
      */
     let { icon, size = 40, label = '' } = $props();
 
@@ -25,7 +25,9 @@
         /** Sappho's own writing. */
         sappho: ['#d13f88', '#ffffff'],
         /** The day's board. */
-        board: ['#121212', '#ffffff']
+        board: ['#121212', '#ffffff'],
+        /** The purse: banked points. */
+        coin: ['#178a3c', '#ffffff']
     };
     const [background, glyph] = $derived(TILES[icon]);
     const across = $derived(Math.round(size * 0.72));
@@ -80,6 +82,10 @@
             <path d="M20 13 H44 V25 A12 12 0 0 1 20 25 Z" fill="currentColor" />
             <path d="M32 37 V47" stroke="currentColor" stroke-width="4.5" stroke-linecap="round" />
             <path d="M22 52 H42" stroke="currentColor" stroke-width="4.5" stroke-linecap="round" />
+        {:else if icon === 'coin'}
+            <circle cx="32" cy="32" r="18" fill="currentColor" />
+            <circle cx="32" cy="32" r="12" fill="none" stroke={background} stroke-width="2.5" opacity="0.8" />
+            <path d="M32 24 V40 M27 28 H37 M27 36 H37" stroke={background} stroke-width="3" stroke-linecap="round" />
         {/if}
     </svg>
 </span>

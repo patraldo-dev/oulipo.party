@@ -10,17 +10,28 @@ and became its own site here.
 
 ## How a duel goes
 
-1. Sappho drafts one hidden piece per language per day, against the day's prompt.
+1. The day's prompt is one per language. A **round** is: prepare — Sappho
+   writes a fresh hidden piece against it — then you write and send. No limit
+   but a safeguard: twelve locked rounds a day. Every round's piece is new;
+   the board ranks each member's best round of the day.
 2. You write a piece of your own (30 to 300 words; a longer piece counts up to 300) and send some of its words.
 3. Only your own words can be sent — the ones the prompt gave her sit greyed
-   out. Hits only: a miss costs nothing but its slot, so the score never falls
-   below zero. Small words never count, in any of the three languages.
-4. The wager is the count, in inverse proportion — there is no cap. A hit
-   pays 20 divided by the words sent, capped at ×5: four words pay ×5 a hit,
-   twenty pay ×1, ninety-five pay about ×0.2. A perfect round scores 20
-   whatever the count. The numbers are in `src/lib/oulipo/duel-rules.js`,
-   retuned on the ledger (`duel_ledger`) as real play accumulates.
-5. One duel a day. After you lock it, she rewrites her piece without your words.
+   out, and the editor checks your spelling before anything is sent (unknown
+   words are named; sending anyway is one press away). Hits only: a miss
+   costs nothing but its slot. Small words never count, in any of the three languages.
+4. Two layers of judgement. **The pot is your writing**: one point per fifteen
+   words written, so a 300-word piece plays for 20 and a 30-word piece for 2.
+   A hit pays the pot divided by the words sent — fewer words, more per hit,
+   and a perfect round scores the pot. **The craft grade**: at lock, Sappho
+   reads the whole piece and grades it ✦–✦✦✦✦ (plain ×0.75 to remarkable
+   ×1.5), multiplying the score. The numbers are in
+   `src/lib/oulipo/duel-rules.js`, retuned on the ledger (`duel_ledger`) as real play accumulates.
+5. The score banks to your **purse** (new members start with 10). Before
+   locking you can stake purse points on your own round's hidden piece —
+   "she uses it" (×12) or "she never uses it" (×1.5), three stakes a round —
+   settled by the piece itself when you lock. If she smuggles one of your hit
+   words back into her rewrite, the jailbreak dividend pays +2 a word.
+6. After the lock, she rewrites her piece without your words.
 
 ## Run it
 

@@ -18,15 +18,12 @@
 <div class="hub">
     <header class="head">
         <h1>{$t('hub.title')}</h1>
-        <p class="tagline">{$t('site.description')}</p>
     </header>
 
     <div class="games">
         <a class="game glass-surface duel" href="/duel">
             <GameIcon icon="duel" size={72} />
             <h2>{$t('duel.title')}</h2>
-            <p class="what">{$t('hub.duel_tag')}</p>
-            <p class="how">{$t('hub.duel_line')}</p>
             <p class="status" class:done={Boolean(data.duel)}>
                 {#if !data.signedIn}
                     {$t('hub.signin_hint')}
@@ -36,14 +33,15 @@
                     {$t('hub.duel_open')}
                 {/if}
             </p>
+            {#if data.streak > 1}
+                <p class="streak">{fill($t(data.streak === 1 ? 'duel.streak_one' : 'duel.streak'), { n: data.streak })}</p>
+            {/if}
             <span class="go">{$t('hub.duel_button')} <span aria-hidden="true">→</span></span>
         </a>
 
         <a class="game glass-surface siege" href="/siege">
             <GameIcon icon="siege" size={72} />
             <h2>{$t('hub.siege_title')}</h2>
-            <p class="what">{$t('hub.siege_tag')}</p>
-            <p class="how">{$t('hub.siege_line')}</p>
             <p class="status">
                 {#if !data.signedIn}
                     {$t('hub.signin_hint')}
@@ -77,13 +75,11 @@
         color: var(--text);
         margin: 0 0 0.6rem;
     }
-    .tagline {
+    .streak {
         color: var(--text-dim);
-        font-size: 1.05rem;
-        font-weight: 500;
-        line-height: 1.45;
+        font-size: 0.92rem;
+        font-weight: 600;
         margin: 0;
-        max-width: 36ch;
     }
 
     /* One tile per game, in that game's colour. */
@@ -125,18 +121,6 @@
         letter-spacing: -0.02em;
         color: var(--text);
         margin: 1.1rem 0 0.35rem;
-    }
-    .what {
-        font-weight: 700;
-        line-height: 1.4;
-        color: var(--text);
-        margin: 0;
-    }
-    .how {
-        color: var(--text-dim);
-        font-size: 0.95rem;
-        line-height: 1.5;
-        margin: 0.15rem 0 0;
     }
     .status {
         color: var(--tint);

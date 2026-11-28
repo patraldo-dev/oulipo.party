@@ -97,7 +97,7 @@ test('a wrong code is not a room, and codes cannot be searched for', async () =>
 test('the room has a hidden piece of its own, never the site’s, and it stays hidden', async () => {
     const { db, code } = await room(['ana', 'bo']);
     const site = fakeAi(['The site’s own piece for the day, about a map.']);
-    assert.equal((await prepareDuel(db, site, 'en', DAY)).draftReady, true);
+    assert.equal((await prepareDuel(db, site, 'someone', 'en', DAY)).draftReady, true);
     assert.equal(db.rows('SELECT content FROM siege_drafts')[0].content, DRAFT);
     assert.equal(db.rows('SELECT content FROM oulipo_duel_drafts')[0].content, 'The site’s own piece for the day, about a map.');
     const view = await stateOf(db, 'ana', code, DAY);
