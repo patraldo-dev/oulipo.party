@@ -1,9 +1,11 @@
 // src/lib/spell.js
 // The editor's pre-submit check: which of a piece's words the dictionary does
-// not know. Advisory only — names, coinages and borrowed words are a writer's
-// business — so the caller offers "send anyway" rather than refusing.
-// The dictionaries are hunspell's, one per language, fetched from the site's
-// own static files on first use (see static/dictionaries/README.md).
+// not know. Advisory only — the caller names them once and a second press
+// sends anyway. A word that appears capitalized anywhere in the piece is
+// taken for a proper noun — a name, a place — and never flagged: the writer's
+// people and places are not spelling errors. The dictionaries are hunspell's,
+// one per language, fetched from the site's own static files on first use
+// (see static/dictionaries/README.md).
 import nspell from 'nspell';
 
 /** @typedef {{ correct(word: string): boolean }} Checker */
@@ -29,9 +31,9 @@ async function checker(lang) {
                     fetch(`/dictionaries/${lang}.dic`).then((r) => (r.ok ? r.text() : ''))
                 ]);
                 if (!aff || !dic) return null;
-                const made = /** @type {unknown} */ (nspell(aff, dic));
-                loaded[lang] = /** @type {Checker} */ (made);
-                return made;
+                const instance = /** @type {unknown} */ (nspell(aff, dic));
+                loaded[lang] = /** @type {Checker} */ (instance);
+                return loaded[lang];
             } catch {
                 return null;
             } finally {
@@ -45,8 +47,9 @@ async function checker(lang) {
 
 /**
  * The piece's distinct words the dictionary does not know, in the order they
- * first appear. Words of two letters or more, folded to lower case; anything
- * with a digit is left alone. Capped, so a page of code cannot stall a send.
+ * first appear, said the way the piece says them. Words of two letters or
+ * more; a word written capitalized anywhere in the piece is a proper noun
+ * and skips the check. Capped, so a page of code cannot stall a send.
  * @param {string} text
  * @param {string} lang
  * @returns {Promise<string[]>}
@@ -54,16 +57,23 @@ async function checker(lang) {
 export async function suspiciousWords(text, lang) {
     const ns = await checker(lang);
     if (!ns) return [];
-    const seen = new Set();
-    const words = String(text ?? '')
-        .toLowerCase()
-        .match(/[\p{L}][\p{L}'’-]*[\p{L}]/gu);
+    /** @type {Map<string, { capitalized: boolean, display: string }>} */
+    const seen = new Map();
+    for (const token of String(text ?? '').match(/[\p{L}][\p{L}'’-]*[\p{L}]/gu) ?? []) {
+        const lower = token.toLowerCase();
+        if (lower.length < 2) continue;
+        let entry = seen.get(lower);
+        if (!entry) {
+            entry = { capitalized: false, display: token };
+            seen.set(lower, entry);
+        }
+        if (/^\p{Lu}/u.test(token)) entry.capitalized = true;
+    }
     const found = [];
-    for (const word of words ?? []) {
-        if (seen.has(word)) continue;
-        seen.add(word);
-        if (!ns.correct(word)) {
-            found.push(word);
+    for (const [lower, entry] of seen) {
+        if (entry.capitalized) continue;
+        if (!ns.correct(lower)) {
+            found.push(entry.display);
             if (found.length >= 200) break;
         }
     }

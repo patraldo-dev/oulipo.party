@@ -220,11 +220,11 @@
   "duel.craft.2": "vivid",
   "duel.craft.3": "remarkable",
   "duel.craft_line": "{stars} {name} — his grade of your writing.",
-  "duel.spell_words": "Not in the dictionary: {words}.",
-  "duel.spell_anyway": "Check them, or press send again to send anyway.",
+  "duel.spell_words": "Not in the dictionary ({n}): {words}.",
+  "duel.spell_anyway": "Names are not checked. Check the rest, or press send again to send anyway.",
   "duel.purse": "Purse: {n} points",
   "duel.bet_title": "Side bets",
-  "duel.bet_body": "Stake points on this round’s hidden piece: pick a word and bet that he uses it, or that he never does. Settled when you lock.",
+  "duel.bet_body": "Your purse starts at 10 points, and every round’s score banks into it — this is where it is spent. Pick a word and stake points on this round’s hidden piece: that he uses it (×12) or that he never does (×1.5). Three stakes a round, settled when you lock.",
   "duel.bet_word": "Word",
   "duel.bet_stake": "Stake",
   "duel.bet_uses": "He uses it ×{n}",
@@ -239,5 +239,6 @@
   "duel.bet_stake_small": "Stake at least one point.",
   "duel.jailbreak": "Jailbreak +{n}: he smuggled {m} of your hostages back into his rewrite.",
   "duel.streak": "Streak: {n} days",
-  "duel.streak_one": "Streak: 1 day"
+  "duel.streak_one": "Streak: 1 day",
+  "duel.sent_tile": "Sent"
 }

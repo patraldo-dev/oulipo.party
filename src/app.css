@@ -787,6 +787,10 @@ html[data-theme='dark'] .game-page {
 .game-page .wager {
   font-weight: 600;
 }
+/* The spelling advice is not a failure: said in muted ink, not the red. */
+.game-page .notice.spell {
+  color: var(--text-muted);
+}
 /* The side bets: a purse line, a word to stake on, two buttons. */
 .game-page .side-bets .purse-line {
   font-weight: 700;

@@ -220,11 +220,11 @@
   "duel.craft.2": "vive",
   "duel.craft.3": "remarquable",
   "duel.craft_line": "{stars} {name} — sa note de ton écriture.",
-  "duel.spell_words": "Absents du dictionnaire : {words}.",
-  "duel.spell_anyway": "Vérifie-les, ou appuie encore sur envoyer pour les envoyer quand même.",
+  "duel.spell_words": "Absents du dictionnaire ({n}) : {words}.",
+  "duel.spell_anyway": "Les noms propres ne sont pas vérifiés. Vérifie le reste, ou appuie encore sur envoyer pour les envoyer quand même.",
   "duel.purse": "Bourse : {n} points",
   "duel.bet_title": "Paris à part",
-  "duel.bet_body": "Mise des points de ta bourse sur la pièce cachée de cette manche : choisis un mot et parie qu'il l'utilise, ou qu'il ne l'utilise jamais. Réglé au verrouillage.",
+  "duel.bet_body": "La bourse commence à 10 points et chaque score y est mis de côté : c’est ici qu’elle se dépense. Choisis un mot et mise des points sur la pièce cachée de cette manche : qu’il l’utilise (×12) ou qu’il ne l’utilise jamais (×1.5). Trois mises par manche, réglées au verrouillage.",
   "duel.bet_word": "Mot",
   "duel.bet_stake": "Mise",
   "duel.bet_uses": "Il l’utilise ×{n}",
@@ -239,5 +239,6 @@
   "duel.bet_stake_small": "Mise au moins un point.",
   "duel.jailbreak": "Évasion +{n} : il a fait passer {m} de tes otages dans sa réécriture.",
   "duel.streak": "Série : {n} jours",
-  "duel.streak_one": "Série : 1 jour"
+  "duel.streak_one": "Série : 1 jour",
+  "duel.sent_tile": "Envoyés"
 }

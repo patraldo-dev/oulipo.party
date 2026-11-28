@@ -220,11 +220,11 @@
   "duel.craft.2": "vívida",
   "duel.craft.3": "notable",
   "duel.craft_line": "{stars} {name}: su calificación a tu escritura.",
-  "duel.spell_words": "No están en el diccionario: {words}.",
-  "duel.spell_anyway": "Revísalas, o pulsa enviar otra vez para enviarlas igual.",
+  "duel.spell_words": "No están en el diccionario ({n}): {words}.",
+  "duel.spell_anyway": "Los nombres propios no se revisan. Revisa el resto, o pulsa enviar otra vez para enviarlas igual.",
   "duel.purse": "Bolsa: {n} puntos",
   "duel.bet_title": "Apuestas laterales",
-  "duel.bet_body": "Apostar puntos de tu bolsa a la pieza oculta de esta ronda: elige una palabra y apuesta a que él la usa, o a que nunca la usa. Se resuelven al bloquear.",
+  "duel.bet_body": "La bolsa empieza con 10 puntos y cada puntuación se guarda en ella: aquí es donde se gasta. Elige una palabra y apuesta puntos a la pieza oculta de esta ronda: a que él la usa (×12) o a que nunca la usa (×1.5). Tres apuestas por ronda, resueltas al bloquear.",
   "duel.bet_word": "Palabra",
   "duel.bet_stake": "Apostar",
   "duel.bet_uses": "Él la usa ×{n}",
@@ -239,5 +239,6 @@
   "duel.bet_stake_small": "Apuesta al menos un punto.",
   "duel.jailbreak": "Fuga +{n}: contrabandeó {m} de tus rehenes en su reescritura.",
   "duel.streak": "Racha: {n} días",
-  "duel.streak_one": "Racha: 1 día"
+  "duel.streak_one": "Racha: 1 día",
+  "duel.sent_tile": "Enviadas"
 }

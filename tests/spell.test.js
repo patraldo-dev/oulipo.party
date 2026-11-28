@@ -8,14 +8,15 @@ import { suspiciousWords } from '../src/lib/spell.js';
 
 const AFF = 'SET UTF-8\n';
 // The .dic's first line is its word count; the rest are words.
-const WORDS = ['la', 'guardiana', 'del', 'faro', 'vio', 'un', 'y', 'otro', 'junto', 'a', 'gaviota', 'escribió'];
-const DIC = [String(WORDS.length), ...WORDS].join('\n');
+const WORDS_ES = ['la', 'guardiana', 'del', 'faro', 'vio', 'un', 'y', 'otro', 'junto', 'a', 'gaviota', 'escribió'];
+const WORDS_EN = ['and', 'the', 'dog', 'followed', 'whole', 'road'];
+const DIC = (words) => [String(words.length), ...words].join('\n');
 
-test('words the dictionary does not know are named, in order, once each', async () => {
+test('unknown words are named in order, said as the piece says them; capitalized names skip', async () => {
     const original = globalThis.fetch;
     globalThis.fetch = async (url) => ({
         ok: true,
-        text: async () => (String(url).endsWith('.aff') ? AFF : DIC)
+        text: async () => (String(url).endsWith('.aff') ? AFF : DIC(String(url).includes('/en.') ? WORDS_EN : WORDS_ES))
     });
     try {
         const bad = await suspiciousWords(
@@ -23,6 +24,13 @@ test('words the dictionary does not know are named, in order, once each', async 
             'es'
         );
         assert.deepEqual(bad, ['xilofón', 'qrzz']);
+        // A name written capitalized — Lawrence, María — is a proper noun,
+        // however few letters it shares with the dictionary.
+        const names = await suspiciousWords(
+            'Lawrence and María walked the whole road, and the dog followed.',
+            'en'
+        );
+        assert.deepEqual(names, ['walked']);
     } finally {
         globalThis.fetch = original;
     }

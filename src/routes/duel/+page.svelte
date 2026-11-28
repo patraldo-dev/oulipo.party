@@ -205,7 +205,10 @@
         if (!spellWarned) {
             const bad = await suspiciousWords(piece.counted, lang);
             if (bad.length) {
-                spellWarned = bad.slice(0, 12).join(', ');
+                // Say how many there are, name at most eight, and keep the piece's own
+                // capitalization — the names are the writer's.
+                const shown = bad.slice(0, 8);
+                spellWarned = bad.length + '|' + shown.join(', ') + (bad.length > shown.length ? ` … +${bad.length - shown.length}` : '');
                 notice = '';
                 return;
             }
@@ -400,8 +403,8 @@
                     </span>
                 </div>
                 {#if spellWarned}
-                    <p class="notice" aria-live="assertive">
-                        {fill($t('duel.spell_words'), { words: spellWarned })}
+                    <p class="notice spell" aria-live="assertive">
+                        {fill($t('duel.spell_words'), { n: spellWarned.split('|')[0], words: spellWarned.split('|')[1] || '' })}
                         {$t('duel.spell_anyway')}
                     </p>
                 {/if}
@@ -465,8 +468,8 @@
                     <dd class="hit">{round.hits}</dd>
                 </div>
                 <div class="tile miss">
-                    <dt>{$t('duel.misses')}</dt>
-                    <dd class="miss">{round.misses}</dd>
+                    <dt>{$t('duel.sent_tile')}</dt>
+                    <dd class="miss">{round.ropeCount}</dd>
                 </div>
                 <div class="tile muzzle">
                     <dt>{$t('duel.muzzle')}</dt>
@@ -543,7 +546,6 @@
                             </span>
                             <span class="marks">
                                 <i class="mark hit"></i>{row.hits}
-                                <i class="mark miss"></i>{row.misses}
                             </span>
                             <span class="pts">{row.score > 0 ? '+' : ''}{row.score}</span>
                         </li>
